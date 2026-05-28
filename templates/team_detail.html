@@ -26,6 +26,9 @@
         margin: 1.5rem 0 1rem 0;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #dfe1e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     
     .members-grid {
@@ -86,18 +89,60 @@
         gap: 1rem;
     }
     
-    .loading {
-        text-align: center;
-        padding: 2rem;
-        color: #5e6c84;
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
     }
     
-    .error-message {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 1rem;
-        border-radius: 3px;
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        max-width: 400px;
+        width: 90%;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #dfe1e6;
+        border-radius: 3px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
     }
 </style>
 {% endblock %}
@@ -106,80 +151,59 @@
 <div id="team-detail">
     <div class="loading">Loading team details...</div>
 </div>
+
+<!-- Модальное окно для добавления участника -->
+<div id="add-member-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Add Team Member</h2>
+            <button class="btn-icon" onclick="closeAddMemberModal()">✕</button>
+        </div>
+        <form id="add-member-form">
+            <div class="form-group">
+                <label for="user-select">Select User</label>
+                <select id="user-select" required>
+                    <option value="">Choose user...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="role-select">Role</label>
+                <select id="role-select">
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeAddMemberModal()">Cancel</button>
+                <button type="submit" class="btn">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+const teamId = {{ team_id }};
+let currentTeam = null;
+let allUsers = [];
+
 async function loadTeamDetail() {
     try {
-        const teamId = {{ team_id }};
-        
-        // Загружаем информацию о команде
         const teamResponse = await fetch(`/api/teams/${teamId}`);
-        if (!teamResponse.ok) {
-            throw new Error('Team not found');
-        }
-        const team = await teamResponse.json();
+        if (!teamResponse.ok) throw new Error('Team not found');
+        currentTeam = await teamResponse.json();
         
-        // Загружаем доски команды
         const boardsResponse = await fetch(`/api/teams/${teamId}/boards`);
         const boards = await boardsResponse.json();
         
-        // Рендерим HTML
-        const membersHTML = team.members.map(member => `
-            <div class="member-card">
-                <div class="member-avatar">
-                    ${member.username.charAt(0).toUpperCase()}
-                </div>
-                <div class="member-info">
-                    <div class="member-name">${member.username}</div>
-                    <div class="member-email">${member.email}</div>
-                </div>
-                <span class="member-role">${member.role || 'member'}</span>
-            </div>
-        `).join('');
+        const usersResponse = await fetch('/api/users');
+        allUsers = await usersResponse.json();
         
-        const boardsHTML = boards.length > 0 
-            ? boards.map(board => `
-                <div class="card">
-                    <h3>${board.title}</h3>
-                    <p style="color: #5e6c84; margin: 0.5rem 0;">${board.description || 'No description'}</p>
-                    <p style="font-size: 0.9rem; color: #5e6c84; margin-bottom: 0.5rem;">
-                        Created: ${new Date(board.created_at).toLocaleDateString()}
-                    </p>
-                    <a href="/boards/${board.id}" class="btn">Open Board</a>
-                </div>
-            `).join('')
-            : '<p style="color: #5e6c84;">No boards yet</p>';
-        
-        document.getElementById('team-detail').innerHTML = `
-            <div class="team-header">
-                <h1 class="team-title">${team.name}</h1>
-                <p class="team-description">${team.description || 'No description'}</p>
-                <p style="margin-top: 1rem; color: #5e6c84; font-size: 0.9rem;">
-                    Created: ${new Date(team.created_at).toLocaleDateString()}
-                </p>
-            </div>
-            
-            <h2 class="section-title">
-                Team Members (${team.members.length})
-            </h2>
-            <div class="members-grid">
-                ${membersHTML}
-            </div>
-            
-            <h2 class="section-title">
-                Boards (${boards.length})
-            </h2>
-            <div class="boards-grid">
-                ${boardsHTML}
-            </div>
-            
-            <div style="margin-top: 2rem;">
-                <a href="/teams" class="btn btn-secondary">← Back to Teams</a>
-            </div>
-        `;
-        
+        renderTeamDetail(currentTeam, boards);
+        populateUserSelect();
     } catch (error) {
         document.getElementById('team-detail').innerHTML = `
             <div class="error-message">
@@ -188,6 +212,135 @@ async function loadTeamDetail() {
             </div>
             <a href="/teams" class="btn btn-secondary">← Back to Teams</a>
         `;
+    }
+}
+
+function renderTeamDetail(team, boards) {
+    const membersHTML = team.members.map(member => `
+        <div class="member-card">
+            <div class="member-avatar">
+                ${member.username.charAt(0).toUpperCase()}
+            </div>
+            <div class="member-info">
+                <div class="member-name">${member.username}</div>
+                <div class="member-email">${member.email}</div>
+            </div>
+            <span class="member-role">${member.role || 'member'}</span>
+            <button class="btn-icon" onclick="removeMember(${member.id})" title="Remove member">✕</button>
+        </div>
+    `).join('');
+    
+    const boardsHTML = boards.length > 0 
+        ? boards.map(board => `
+            <div class="card">
+                <h3>${board.title}</h3>
+                <p style="color: #5e6c84; margin: 0.5rem 0;">${board.description || 'No description'}</p>
+                <a href="/boards/${board.id}" class="btn">Open Board</a>
+            </div>
+        `).join('')
+        : '<p style="color: #5e6c84;">No boards yet</p>';
+    
+    document.getElementById('team-detail').innerHTML = `
+        <div class="team-header">
+            <h1 class="team-title">${team.name}</h1>
+            <p class="team-description">${team.description || 'No description'}</p>
+            <button class="btn" onclick="deleteTeam()" style="background-color: #eb5a46; margin-top: 1rem;">Delete Team</button>
+        </div>
+        
+        <h2 class="section-title">
+            Team Members (${team.members.length})
+            <button class="btn" onclick="openAddMemberModal()">+ Add Member</button>
+        </h2>
+        <div class="members-grid">
+            ${membersHTML}
+        </div>
+        
+        <h2 class="section-title">Boards (${boards.length})</h2>
+        <div class="boards-grid">
+            ${boardsHTML}
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <a href="/teams" class="btn btn-secondary">← Back to Teams</a>
+        </div>
+    `;
+}
+
+function populateUserSelect() {
+    const select = document.getElementById('user-select');
+    const teamMemberIds = currentTeam.members.map(m => m.id);
+    
+    allUsers.forEach(user => {
+        if (!teamMemberIds.includes(user.id)) {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.username;
+            select.appendChild(option);
+        }
+    });
+}
+
+// Управление участниками
+function openAddMemberModal() {
+    document.getElementById('add-member-modal').classList.add('active');
+}
+
+function closeAddMemberModal() {
+    document.getElementById('add-member-modal').classList.remove('active');
+}
+
+document.getElementById('add-member-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('user-select').value;
+    const role = document.getElementById('role-select').value;
+    
+    try {
+        await fetch(`/api/teams/${teamId}/members`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: parseInt(userId), role })
+        });
+        
+        closeAddMemberModal();
+        loadTeamDetail();
+    } catch (error) {
+        alert('Error adding member: ' + error.message);
+    }
+});
+
+async function removeMember(userId) {
+    if (!confirm('Are you sure you want to remove this member?')) return;
+    
+    try {
+        await fetch(`/api/teams/${teamId}/members`, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        loadTeamDetail();
+    } catch (error) {
+        alert('Error removing member: ' + error.message);
+    }
+}
+
+// Управление командой
+async function deleteTeam() {
+    if (!confirm('Are you sure you want to delete this team?')) return;
+    
+    try {
+        await fetch(`/api/teams/${teamId}`, { method: 'DELETE' });
+        window.location.href = '/teams';
+    } catch (error) {
+        alert('Error deleting team: ' + error.message);
+    }
+}
+
+// Закрытие модальных окон
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
     }
 }
 

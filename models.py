@@ -1,5 +1,4 @@
 class User:
-    """Простая модель пользователя"""
     def __init__(self, row):
         self.id = row['id']
         self.username = row['username']
@@ -15,13 +14,12 @@ class User:
         }
 
 class Team:
-    """Простая модель команды"""
     def __init__(self, row):
         self.id = row['id']
         self.name = row['name']
         self.description = row['description']
         self.created_at = row['created_at']
-        self.members = []  # Будет заполняться отдельно
+        self.members = []
     
     def to_dict(self):
         return {
@@ -33,7 +31,6 @@ class Team:
         }
 
 class Board:
-    """Простая модель доски"""
     def __init__(self, row):
         self.id = row['id']
         self.title = row['title']
@@ -49,3 +46,51 @@ class Board:
             'team_id': self.team_id,
             'created_at': self.created_at
         }
+
+class Column:
+    def __init__(self, row):
+        self.id = row['id']
+        self.title = row['title']
+        self.position = row['position']
+        self.board_id = row['board_id']
+        self.created_at = row['created_at']
+        self.cards = []
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'position': self.position,
+            'board_id': self.board_id,
+            'created_at': self.created_at,
+            'cards': [c.to_dict() for c in self.cards]
+        }
+
+class Card:
+    def __init__(self, row):
+        self.id = row['id']
+        self.title = row['title']
+        self.description = row['description']
+        self.position = row['position']
+        self.column_id = row['column_id']
+        self.assignee_id = row['assignee_id']
+        self.priority = row['priority']
+        self.created_at = row['created_at']
+        self.updated_at = row['updated_at']
+        self.assignee = None
+    
+    def to_dict(self):
+        result = {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'position': self.position,
+            'column_id': self.column_id,
+            'assignee_id': self.assignee_id,
+            'priority': self.priority,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
+        }
+        if self.assignee:
+            result['assignee'] = self.assignee.to_dict()
+        return result
