@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Boards - Kanban Board{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Boards</h1>
+</div>
+
+<div id="boards-container" class="grid">
+    <!-- Данные будут загружены через JavaScript -->
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadBoards() {
+    try {
+        const response = await fetch('/api/boards');
+        const boards = await response.json();
+        
+        const container = document.getElementById('boards-container');
+        container.innerHTML = boards.map(board => `
+            <div class="card">
+                <h3>${board.title}</h3>
+                <p style="color: #5e6c84; margin: 0.5rem 0;">${board.description || 'No description'}</p>
+                <a href="/boards/${board.id}" class="btn" style="margin-top: 0.5rem;">Open Board</a>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading boards:', error);
+    }
+}
+
+loadBoards();
+</script>
+{% endblock %}

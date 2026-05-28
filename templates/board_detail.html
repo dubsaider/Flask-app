@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Board Details - Kanban Board{% endblock %}
+
+{% block extra_css %}
+<style>
+    .board-header {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .board-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .board-description {
+        color: #5e6c84;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="board-detail">
+    <!-- Данные будут загружены через JavaScript -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadBoardDetail() {
+    try {
+        const boardId = {{ board_id }};
+        const response = await fetch(`/api/boards/${boardId}`);
+        
+        if (!response.ok) {
+            throw new Error('Board not found');
+        }
+        
+        const board = await response.json();
+        
+        document.getElementById('board-detail').innerHTML = `
+            <div class="board-header">
+                <h1 class="board-title">${board.title}</h1>
+                <p class="board-description">${board.description || 'No description'}</p>
+                <p style="margin-top: 1rem; color: #5e6c84; font-size: 0.9rem;">
+                    Team ID: ${board.team_id} | Created: ${new Date(board.created_at).toLocaleDateString()}
+                </p>
+            </div>
+            <a href="/boards" class="btn btn-secondary">← Back to Boards</a>
+        `;
+    } catch (error) {
+        document.getElementById('board-detail').innerHTML = `
+            <div class="card">
+                <h2>Error loading board</h2>
+                <p>${error.message}</p>
+                <a href="/boards" class="btn btn-secondary" style="margin-top: 1rem;">← Back to Boards</a>
+            </div>
+        `;
+    }
+}
+
+loadBoardDetail();
+</script>
+{% endblock %}

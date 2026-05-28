@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask import render_template
 from database import init_db, get_db_context
 from models import User, Team, Board
 
@@ -7,6 +8,35 @@ app = Flask(__name__)
 # Инициализация базы данных при запуске
 with app.app_context():
     init_db()
+
+
+# ============ Page Endpoints ============
+
+@app.route('/')
+def index():
+    """Главная страница"""
+    return render_template('index.html')
+
+@app.route('/boards')
+def boards_list():
+    """Страница со списком досок"""
+    return render_template('boards.html')
+
+@app.route('/boards/<int:board_id>')
+def board_detail(board_id):
+    """Страница конкретной доски"""
+    return render_template('board_detail.html', board_id=board_id)
+
+@app.route('/teams')
+def teams_list():
+    """Страница со списком команд"""
+    return render_template('teams.html')
+
+@app.route('/teams/<int:team_id>')
+def team_detail(team_id):
+    """Страница конкретной команды"""
+    return render_template('team_detail.html', team_id=team_id)
+
 
 # ============ API Endpoints ============
 
