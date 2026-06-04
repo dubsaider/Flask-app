@@ -45,7 +45,7 @@ const Modals = {
         document.getElementById('card-deadline-input').value = '';
         document.getElementById('card-form').style.display = '';
         document.getElementById('card-view-only').style.display = 'none';
-        document.getElementById('comments-list').innerHTML = '';
+        document.getElementById('comments-list').replaceChildren();
         Cards.populateAssigneeSelect(null);
     },
     
@@ -72,15 +72,6 @@ const Modals = {
     
     closeColumn() {
         document.getElementById('column-modal').classList.remove('active');
-    },
-    
-    // Member modal
-    openAddMember() {
-        document.getElementById('add-member-modal').classList.add('active');
-    },
-    
-    closeAddMember() {
-        document.getElementById('add-member-modal').classList.remove('active');
     }
 };
 

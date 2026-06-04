@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,18 +7,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    {% include 'components/navbar.html' %}
-    
-    <main class="container">
+<body class="auth-body">
+    <main class="auth-main">
         {% block content %}{% endblock %}
     </main>
-    
-    <!-- Базовые скрипты -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+    {% include 'components/html_templates.html' %}
+
+    <script src="{{ url_for('static', filename='js/dom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-    
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

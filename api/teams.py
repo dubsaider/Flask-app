@@ -2,24 +2,7 @@ from flask import jsonify, request
 from .init import api_bp
 from database import get_db_context
 from models import User, Team, Board
-
-def _load_team(conn, team_row):
-    team_obj = Team(team_row)
-    members = conn.execute('''
-        SELECT u.*, tm.role 
-        FROM users u 
-        JOIN team_members tm ON u.id = tm.user_id 
-        WHERE tm.team_id = ?
-    ''', (team_obj.id,)).fetchall()
-    team_obj.members = [User(m) for m in members]
-    if team_obj.curator_id:
-        curator = conn.execute(
-            'SELECT * FROM users WHERE id = ?',
-            (team_obj.curator_id,)
-        ).fetchone()
-        if curator:
-            team_obj.curator = User(curator)
-    return team_obj
+from .helpers import load_team
 
 @api_bp.route('/teams', methods=['GET', 'POST'])
 def teams_handler():
@@ -37,7 +20,7 @@ def teams_handler():
         teams = conn.execute('SELECT * FROM teams').fetchall()
         result = []
         for team_row in teams:
-            result.append(_load_team(conn, team_row).to_dict())
+            result.append(load_team(conn, team_row).to_dict())
         return jsonify(result)
 
 @api_bp.route('/teams/<int:team_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -60,7 +43,7 @@ def team_handler(team_id):
         
         team = conn.execute('SELECT * FROM teams WHERE id = ?', (team_id,)).fetchone()
         if team:
-            return jsonify(_load_team(conn, team).to_dict())
+            return jsonify(load_team(conn, team).to_dict())
         return jsonify({'error': 'Team not found'}), 404
 
 @api_bp.route('/teams/<int:team_id>/members', methods=['POST', 'DELETE'])

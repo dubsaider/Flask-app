@@ -1,13 +1,10 @@
 <div class="comments-section">
-    <h3 class="comments-title">Comments</h3>
+    <h3 class="comments-title">Комментарии</h3>
     
-    <div id="comments-list" class="comments-list">
-        <!-- Комментарии загружаются динамически -->
-    </div>
+    <div id="comments-list" class="comments-list"></div>
     
-    <!-- Форма добавления комментария (доступна всем) -->
     <div class="comment-form">
-        <textarea id="comment-text" placeholder="Write a comment..." rows="3"></textarea>
-        <button class="btn" onclick="Comments.addComment()">Send</button>
+        <textarea id="comment-text" placeholder="Написать комментарий..." rows="3"></textarea>
+        <button type="button" class="btn" id="comment-submit-btn">Отправить</button>
     </div>
 </div>

@@ -1,0 +1,198 @@
+.board-app,
+.board-workspace {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.board-title {
+    font-size: 1.4rem;
+    margin-bottom: 0.25rem;
+}
+
+.board-description {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+}
+
+.board-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.board-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem 1.5rem;
+    flex: 1;
+    align-items: flex-start;
+}
+
+.column {
+    background: var(--color-column);
+    border-radius: var(--radius-md);
+    width: 272px;
+    min-width: 272px;
+    max-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+}
+
+.column-header {
+    padding: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.column-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    flex: 1;
+    color: var(--color-text);
+}
+
+.cards-list {
+    padding: 0 0.5rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 10px;
+}
+
+.card-item {
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.card-item:hover {
+    background: var(--color-bg);
+}
+
+.card-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.card-title {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    word-wrap: break-word;
+}
+
+.card-badges {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.add-card-btn,
+.add-column-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    width: 100%;
+    text-align: left;
+    border-radius: var(--radius-sm);
+    margin: 0.25rem 0;
+}
+
+.add-card-btn:hover,
+.add-column-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text);
+}
+
+.add-column-btn {
+    background: rgba(255, 255, 255, 0.45);
+    min-width: 272px;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+}
+
+.board-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.state-title {
+    margin-bottom: 0.75rem;
+    color: var(--color-danger);
+}
+
+.state-message {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+    max-width: 420px;
+}
+
+.state-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.role-badge--leader {
+    background: #ffd700;
+    color: var(--color-text);
+}
+
+.role-badge--developer {
+    background: var(--color-border);
+    color: var(--color-text);
+}
+
+.role-badge--curator {
+    background: #4a90e2;
+    color: #fff;
+}
+
+.role-badge--none {
+    background: var(--color-danger);
+    color: #fff;
+}

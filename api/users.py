@@ -1,7 +1,8 @@
 from flask import jsonify, request
 from .init import api_bp
 from database import get_db_context
-from models import User
+from models import User, Board
+from .helpers import load_team, user_has_team_access
 
 @api_bp.route('/users', methods=['GET'])
 def get_users():
@@ -16,3 +17,30 @@ def get_user(user_id):
         if user:
             return jsonify(User(user).to_dict())
         return jsonify({'error': 'User not found'}), 404
+
+@api_bp.route('/users/<int:user_id>/workspace', methods=['GET'])
+def get_user_workspace(user_id):
+    """Доски пользователя, сгруппированные по командам"""
+    with get_db_context() as conn:
+        teams = conn.execute('SELECT * FROM teams ORDER BY name').fetchall()
+        workspace = []
+
+        for team_row in teams:
+            if not user_has_team_access(conn, team_row, user_id):
+                continue
+
+            boards = conn.execute(
+                'SELECT * FROM boards WHERE team_id = ? ORDER BY title',
+                (team_row['id'],)
+            ).fetchall()
+
+            workspace.append({
+                'team': {
+                    'id': team_row['id'],
+                    'name': team_row['name'],
+                    'description': team_row['description'],
+                },
+                'boards': [Board(board).to_dict() for board in boards]
+            })
+
+        return jsonify(workspace)

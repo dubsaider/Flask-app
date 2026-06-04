@@ -1,0 +1,13 @@
+{% extends "base_app.html" %}
+
+{% block title %}Доска — Kanban Board{% endblock %}
+
+{% block content %}
+<div id="board-app" class="board-app" data-board-id="{{ board_id }}">
+    {% include 'components/board_workspace.html' %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,73 @@
+<!-- HTML-шаблоны для JS (cloneNode, без innerHTML) -->
+
+<template id="tpl-login-user">
+    <button type="button" class="login-user-item">
+        <span class="login-user-avatar" data-field="avatar"></span>
+        <span class="login-user-info">
+            <span class="login-user-name" data-field="name"></span>
+            <span class="login-user-email" data-field="email"></span>
+        </span>
+        <span class="login-user-arrow" aria-hidden="true">→</span>
+    </button>
+</template>
+
+<template id="tpl-sidebar-team">
+    <section class="sidebar-team-group">
+        <h3 class="sidebar-team-name" data-field="team-name"></h3>
+        <ul class="sidebar-board-list" data-field="board-list"></ul>
+    </section>
+</template>
+
+<template id="tpl-sidebar-board">
+    <li class="sidebar-board-item">
+        <a class="sidebar-board-link" data-field="link" title="">
+            <span class="sidebar-board-short" data-field="short" aria-hidden="true"></span>
+            <span class="sidebar-board-title" data-field="title"></span>
+        </a>
+    </li>
+</template>
+
+<template id="tpl-board-column">
+    <article class="column" data-field="column">
+        <header class="column-header">
+            <button type="button" class="column-title" data-field="title-btn"></button>
+            <button type="button" class="btn-icon column-menu-btn hidden" data-field="menu-btn" aria-label="Настройки колонки">⋯</button>
+        </header>
+        <div class="cards-list" data-field="cards-list"></div>
+        <button type="button" class="add-card-btn hidden" data-field="add-card-btn">+ Добавить карточку</button>
+    </article>
+</template>
+
+<template id="tpl-card-item">
+    <div class="card-item" data-field="card">
+        <div class="card-title" data-field="title"></div>
+        <div class="card-badges" data-field="badges">
+            <span class="assignee-badge hidden" data-field="assignee"></span>
+            <span class="badge" data-field="priority"></span>
+            <span class="badge badge-muted hidden" data-field="deadline">📅</span>
+            <span class="badge badge-muted hidden" data-field="comments"></span>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-add-column-btn">
+    <button type="button" class="add-column-btn" data-field="add-column-btn">+ Добавить колонку</button>
+</template>
+
+<template id="tpl-comment-item">
+    <article class="comment-item">
+        <header class="comment-header">
+            <span class="comment-author" data-field="author"></span>
+            <time class="comment-date" data-field="date"></time>
+        </header>
+        <p class="comment-text" data-field="text"></p>
+    </article>
+</template>
+
+<template id="tpl-state-action">
+    <a class="btn" data-field="action-link"></a>
+</template>
+
+<template id="tpl-role-badge">
+    <span class="role-badge" data-field="badge"></span>
+</template>

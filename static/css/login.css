@@ -1,0 +1,115 @@
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #026aa7 0%, #014a75 100%);
+}
+
+.auth-main {
+    width: 100%;
+    padding: 1.5rem;
+}
+
+.login-page {
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.login-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 2rem;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1rem;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.login-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.login-subtitle {
+    color: var(--color-text-muted);
+}
+
+.login-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.login-user-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--color-text);
+}
+
+.login-user-item:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    transform: translateY(-1px);
+}
+
+.login-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.login-user-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-user-name {
+    font-weight: 600;
+}
+
+.login-user-email {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.login-user-arrow {
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+}
