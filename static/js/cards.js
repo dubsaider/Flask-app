@@ -3,7 +3,7 @@ const Cards = {
         const card = await API.getCard(cardId);
         const userRole = Auth.getUserRole(window.currentTeam);
 
-        document.getElementById('card-modal-title').textContent = 'Edit Card';
+        document.getElementById('card-modal-title').textContent = card.title;
         document.getElementById('card-id').value = card.id;
         document.getElementById('card-column-id').value = card.column_id;
         document.getElementById('card-title-input').value = card.title;
@@ -20,14 +20,18 @@ const Cards = {
         const viewOnly = document.getElementById('card-view-only');
 
         if (userRole === 'curator') {
-            cardForm.style.display = 'none';
-            viewOnly.style.display = 'block';
+            DOM.hide(cardForm);
+            DOM.show(viewOnly);
             document.getElementById('view-title').textContent = card.title;
             document.getElementById('view-description').textContent = card.description || '—';
-            document.getElementById('view-priority').textContent = card.priority;
+
+            const priorityEl = document.getElementById('view-priority');
+            const priority = card.priority || 'medium';
+            priorityEl.textContent = PRIORITY_LABELS[priority] || priority;
+            priorityEl.className = `view-priority-badge view-priority-badge--${priority}`;
         } else {
-            cardForm.style.display = '';
-            viewOnly.style.display = 'none';
+            DOM.show(cardForm);
+            DOM.hide(viewOnly);
         }
 
         Comments.loadComments(cardId);
@@ -37,7 +41,13 @@ const Cards = {
         const select = document.getElementById('card-assignee-input');
         if (!select || !window.currentTeam) return;
 
-        select.innerHTML = '<option value="">Unassigned</option>';
+        select.replaceChildren();
+
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = 'Не назначен';
+        select.appendChild(empty);
+
         window.currentTeam.members.forEach(member => {
             const option = document.createElement('option');
             option.value = member.id;
@@ -85,24 +95,25 @@ const Cards = {
             Modals.closeCard();
             Board.loadColumns();
         } catch (error) {
-            alert('Error saving card: ' + error.message);
+            alert('Ошибка сохранения: ' + error.message);
         }
     },
 
     async deleteCard() {
         const cardId = document.getElementById('card-id').value;
-        if (!cardId || !confirm('Delete this card?')) return;
+        if (!cardId || !confirm('Удалить эту карточку?')) return;
 
         try {
             await API.deleteCard(parseInt(cardId));
             Modals.closeCard();
             Board.loadColumns();
         } catch (error) {
-            alert('Error deleting card: ' + error.message);
+            alert('Ошибка удаления: ' + error.message);
         }
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('card-form')?.addEventListener('submit', (e) => Cards.saveCard(e));
+    document.getElementById('card-delete-btn')?.addEventListener('click', () => Cards.deleteCard());
 });

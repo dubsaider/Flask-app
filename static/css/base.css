@@ -53,8 +53,8 @@ a {
     color: var(--color-danger);
 }
 
-.curator-only,
-.member-only,
-.leader-only {
-    display: none;
+.member-only.hidden,
+.leader-only.hidden,
+.curator-only.hidden {
+    display: none !important;
 }

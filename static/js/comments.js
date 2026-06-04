@@ -14,8 +14,11 @@ const Comments = {
 
         comments.forEach(comment => {
             const node = DOM.clone('tpl-comment-item');
-            DOM.setField(node, 'author', comment.author?.username || 'Unknown');
-            DOM.setField(node, 'date', new Date(comment.created_at).toLocaleString());
+            const authorName = comment.author?.username || '?';
+
+            DOM.setField(node, 'avatar', authorName.charAt(0).toUpperCase());
+            DOM.setField(node, 'author', authorName);
+            DOM.setField(node, 'date', new Date(comment.created_at).toLocaleString('ru-RU'));
             DOM.setField(node, 'text', comment.text);
             container.appendChild(node);
         });

@@ -1,21 +1,29 @@
-<!-- Модальное окно для колонки -->
-<div id="column-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title" id="column-modal-title">Edit Column</h2>
-            <button class="btn-icon" onclick="Modals.closeColumn()">✕</button>
+<!-- Модальное окно колонки -->
+<div id="column-modal" class="modal modal--column">
+    <div class="modal-dialog modal-dialog--compact">
+        <header class="modal-header modal-header--column">
+            <div class="modal-header__leading">
+                <span class="modal-header__icon" aria-hidden="true">📑</span>
+                <h2 class="modal-title" id="column-modal-title">Колонка</h2>
+            </div>
+            <button type="button" class="modal-close-btn" id="column-modal-close" aria-label="Закрыть">✕</button>
+        </header>
+
+        <div class="modal-body">
+            <form id="column-form">
+                <input type="hidden" id="column-id">
+                <div class="form-group">
+                    <label class="form-label" for="column-title-input">Название</label>
+                    <input type="text" id="column-title-input" class="form-control" required placeholder="In Progress">
+                </div>
+                <footer class="form-actions form-actions--split">
+                    <button type="button" class="btn btn-danger" id="column-delete-btn">Удалить</button>
+                    <div class="form-actions__right">
+                        <button type="button" class="btn btn-secondary" id="column-cancel-btn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </footer>
+            </form>
         </div>
-        <form id="column-form">
-            <input type="hidden" id="column-id">
-            <div class="form-group">
-                <label for="column-title-input">Title</label>
-                <input type="text" id="column-title-input" required>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn btn-danger" onclick="Columns.deleteColumn()">Delete</button>
-                <button type="button" class="btn btn-secondary" onclick="Modals.closeColumn()">Cancel</button>
-                <button type="submit" class="btn">Save</button>
-            </div>
-        </form>
     </div>
 </div>

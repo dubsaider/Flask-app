@@ -39,15 +39,25 @@
 </template>
 
 <template id="tpl-card-item">
-    <div class="card-item" data-field="card">
-        <div class="card-title" data-field="title"></div>
-        <div class="card-badges" data-field="badges">
-            <span class="assignee-badge hidden" data-field="assignee"></span>
-            <span class="badge" data-field="priority"></span>
-            <span class="badge badge-muted hidden" data-field="deadline">📅</span>
-            <span class="badge badge-muted hidden" data-field="comments"></span>
+    <article class="card-item" data-field="card">
+        <div class="card-item__stripe" data-field="priority-stripe"></div>
+        <div class="card-item__body">
+            <h4 class="card-item__title" data-field="title"></h4>
+            <div class="card-item__meta">
+                <span class="card-chip card-chip--priority" data-field="priority">
+                    <span data-field="priority-text"></span>
+                </span>
+                <span class="card-chip card-chip--deadline hidden" data-field="deadline">
+                    <span class="card-chip__icon" aria-hidden="true">📅</span>
+                </span>
+                <span class="card-chip card-chip--comments hidden" data-field="comments">
+                    <span class="card-chip__icon" aria-hidden="true">💬</span>
+                    <span data-field="comments-count"></span>
+                </span>
+            </div>
         </div>
-    </div>
+        <span class="card-item__assignee hidden" data-field="assignee"></span>
+    </article>
 </template>
 
 <template id="tpl-add-column-btn">
@@ -56,11 +66,14 @@
 
 <template id="tpl-comment-item">
     <article class="comment-item">
-        <header class="comment-header">
-            <span class="comment-author" data-field="author"></span>
-            <time class="comment-date" data-field="date"></time>
-        </header>
-        <p class="comment-text" data-field="text"></p>
+        <div class="comment-item__avatar" data-field="avatar"></div>
+        <div class="comment-item__body">
+            <header class="comment-header">
+                <span class="comment-author" data-field="author"></span>
+                <time class="comment-date" data-field="date"></time>
+            </header>
+            <p class="comment-text" data-field="text"></p>
+        </div>
     </article>
 </template>
 

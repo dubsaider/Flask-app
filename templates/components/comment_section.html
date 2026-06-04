@@ -1,10 +1,13 @@
-<div class="comments-section">
-    <h3 class="comments-title">Комментарии</h3>
-    
+<section class="comments-section">
+    <header class="comments-section__header">
+        <span class="comments-section__icon" aria-hidden="true">💬</span>
+        <h3 class="comments-title">Комментарии</h3>
+    </header>
+
     <div id="comments-list" class="comments-list"></div>
-    
+
     <div class="comment-form">
-        <textarea id="comment-text" placeholder="Написать комментарий..." rows="3"></textarea>
-        <button type="button" class="btn" id="comment-submit-btn">Отправить</button>
+        <textarea id="comment-text" class="form-control form-control--textarea" placeholder="Написать комментарий..." rows="3"></textarea>
+        <button type="button" class="btn btn-primary comment-submit-btn" id="comment-submit-btn">Отправить</button>
     </div>
-</div>
+</section>

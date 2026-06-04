@@ -97,15 +97,15 @@ const Board = {
         const userRole = Auth.getUserRole(this.currentTeam);
 
         document.querySelectorAll('.member-only').forEach(el => {
-            DOM.toggle(el, ['leader', 'developer'].includes(userRole));
+            el.classList.toggle('hidden', !['leader', 'developer'].includes(userRole));
         });
 
         document.querySelectorAll('.leader-only').forEach(el => {
-            DOM.toggle(el, userRole === 'leader');
+            el.classList.toggle('hidden', userRole !== 'leader');
         });
 
         document.querySelectorAll('.curator-only').forEach(el => {
-            DOM.toggle(el, userRole === 'curator');
+            el.classList.toggle('hidden', userRole !== 'curator');
         });
     },
 
@@ -193,13 +193,17 @@ const Board = {
     createCardElement(card) {
         const node = DOM.clone('tpl-card-item');
         const cardEl = node.querySelector('[data-field="card"]');
+        const priority = card.priority || 'medium';
 
         cardEl.dataset.cardId = card.id;
         DOM.setField(node, 'title', card.title);
 
-        const priorityBadge = node.querySelector('[data-field="priority"]');
-        priorityBadge.textContent = card.priority;
-        priorityBadge.classList.add(`priority-${card.priority}`);
+        const stripe = node.querySelector('[data-field="priority-stripe"]');
+        stripe.classList.add(`card-item__stripe--${priority}`);
+
+        const priorityChip = node.querySelector('[data-field="priority"]');
+        priorityChip.classList.add(`card-chip--${priority}`);
+        DOM.setField(node, 'priority-text', PRIORITY_LABELS[priority] || priority);
 
         if (card.assignee) {
             const assignee = node.querySelector('[data-field="assignee"]');
@@ -213,9 +217,8 @@ const Board = {
         }
 
         if (card.comments?.length) {
-            const commentsBadge = node.querySelector('[data-field="comments"]');
-            commentsBadge.textContent = `💬${card.comments.length}`;
-            DOM.show(commentsBadge);
+            DOM.setField(node, 'comments-count', String(card.comments.length));
+            DOM.show(node.querySelector('[data-field="comments"]'));
         }
 
         cardEl.addEventListener('click', () => Modals.openCard(card.id));

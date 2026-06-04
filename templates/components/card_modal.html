@@ -1,81 +1,88 @@
-<!-- Модальное окно для карточки -->
-<div id="card-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title" id="card-modal-title">Card Details</h2>
-            <button class="btn-icon" onclick="Modals.closeCard()">✕</button>
+<!-- Модальное окно карточки -->
+<div id="card-modal" class="modal modal--card">
+    <div class="modal-dialog modal-dialog--wide">
+        <header class="modal-header modal-header--accent">
+            <div class="modal-header__leading">
+                <span class="modal-header__icon" aria-hidden="true">📋</span>
+                <h2 class="modal-title" id="card-modal-title">Карточка</h2>
+            </div>
+            <button type="button" class="modal-close-btn" id="card-modal-close" aria-label="Закрыть">✕</button>
+        </header>
+
+        <div class="modal-body">
+            <form id="card-form" class="card-form">
+                <input type="hidden" id="card-id">
+                <input type="hidden" id="card-column-id">
+
+                <section class="form-section">
+                    <div class="form-group">
+                        <label class="form-label" for="card-title-input">Название</label>
+                        <input type="text" id="card-title-input" class="form-control" required placeholder="Краткое описание задачи">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="card-description-input">Описание</label>
+                        <textarea id="card-description-input" class="form-control form-control--textarea" placeholder="Подробности, ссылки, чек-лист..."></textarea>
+                    </div>
+                </section>
+
+                <section class="form-section form-section--grid">
+                    <div class="form-group leader-only hidden">
+                        <label class="form-label" for="card-assignee-input">Исполнитель</label>
+                        <select id="card-assignee-input" class="form-control">
+                            <option value="">Не назначен</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="card-priority-input">Приоритет</label>
+                        <select id="card-priority-input" class="form-control form-control--priority">
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="critical">Критический</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="card-status-input">Статус</label>
+                        <select id="card-status-input" class="form-control">
+                            <option value="active">Активна</option>
+                            <option value="completed">Завершена</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="card-deadline-input">Дедлайн</label>
+                        <input type="datetime-local" id="card-deadline-input" class="form-control">
+                    </div>
+                </section>
+
+                <footer class="form-actions form-actions--split member-only hidden">
+                    <button type="button" class="btn btn-danger" id="card-delete-btn">Удалить</button>
+                    <div class="form-actions__right">
+                        <button type="button" class="btn btn-secondary" id="card-cancel-btn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </footer>
+            </form>
+
+            <div id="card-view-only" class="card-view-only curator-only hidden">
+                <section class="view-section">
+                    <h3 class="view-section__label">Название</h3>
+                    <p id="view-title" class="view-field"></p>
+                </section>
+                <section class="view-section">
+                    <h3 class="view-section__label">Описание</h3>
+                    <p id="view-description" class="view-field view-field--multiline"></p>
+                </section>
+                <section class="view-section">
+                    <h3 class="view-section__label">Приоритет</h3>
+                    <p id="view-priority" class="view-priority-badge"></p>
+                </section>
+            </div>
+
+            {% include 'components/comment_section.html' %}
         </div>
-        
-        <!-- Форма редактирования (только для участников команды) -->
-        <form id="card-form" class="card-form">
-            <input type="hidden" id="card-id">
-            <input type="hidden" id="card-column-id">
-            
-            <div class="form-group">
-                <label for="card-title-input">Title</label>
-                <input type="text" id="card-title-input" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="card-description-input">Description</label>
-                <textarea id="card-description-input"></textarea>
-            </div>
-            
-            <!-- Назначение ответственного (только для руководителя) -->
-            <div class="form-group leader-only" style="display:none;">
-                <label for="card-assignee-input">Assignee</label>
-                <select id="card-assignee-input">
-                    <option value="">Unassigned</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="card-priority-input">Priority</label>
-                <select id="card-priority-input">
-                    <option value="low">Low</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="card-status-input">Status</label>
-                <select id="card-status-input">
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="card-deadline-input">Deadline</label>
-                <input type="datetime-local" id="card-deadline-input">
-            </div>
-            
-            <div class="form-actions member-only" style="display:none;">
-                <button type="button" class="btn btn-danger" onclick="Cards.deleteCard()">Delete</button>
-                <button type="button" class="btn btn-secondary" onclick="Modals.closeCard()">Cancel</button>
-                <button type="submit" class="btn">Save</button>
-            </div>
-        </form>
-        
-        <!-- Секция для куратора (только просмотр) -->
-        <div id="card-view-only" class="curator-only" style="display:none;">
-            <div class="form-group">
-                <label>Title</label>
-                <p id="view-title" class="view-field"></p>
-            </div>
-            <div class="form-group">
-                <label>Description</label>
-                <p id="view-description" class="view-field"></p>
-            </div>
-            <div class="form-group">
-                <label>Priority</label>
-                <p id="view-priority" class="view-field"></p>
-            </div>
-        </div>
-        
-        <!-- Комментарии (доступны всем) -->
-        {% include 'components/comment_section.html' %}
     </div>
 </div>

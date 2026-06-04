@@ -1,0 +1,110 @@
+/* Kanban cards on the board */
+.card-item {
+    position: relative;
+    display: flex;
+    gap: 0;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 2px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.1);
+    margin-bottom: 0.55rem;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.1);
+}
+
+.card-item:active {
+    transform: translateY(0);
+}
+
+.card-item.dragging {
+    opacity: 0.85;
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 8px 20px rgba(9, 30, 66, 0.2);
+}
+
+.card-item__stripe {
+    width: 4px;
+    flex-shrink: 0;
+    background: var(--color-border);
+}
+
+.card-item__stripe--low { background: #61bd4f; }
+.card-item__stripe--medium { background: #ff9f1a; }
+.card-item__stripe--high { background: #eb5a46; }
+.card-item__stripe--critical { background: #b04632; }
+
+.card-item__body {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 0.65rem 0.55rem;
+}
+
+.card-item__title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--color-text);
+    margin-bottom: 0.45rem;
+    word-wrap: break-word;
+    padding-right: 1.75rem;
+}
+
+.card-item__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.card-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    line-height: 1.2;
+}
+
+.card-chip__icon {
+    font-size: 0.72rem;
+    line-height: 1;
+}
+
+.card-chip--priority {
+    color: #fff;
+}
+
+.card-chip--priority.card-chip--low { background: #61bd4f; }
+.card-chip--priority.card-chip--medium { background: #ff9f1a; }
+.card-chip--priority.card-chip--high { background: #eb5a46; }
+.card-chip--priority.card-chip--critical { background: #b04632; }
+
+.card-chip--deadline,
+.card-chip--comments {
+    background: rgba(9, 30, 66, 0.08);
+    color: var(--color-text-muted);
+}
+
+.card-item__assignee {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #026aa7, #014a75);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px var(--color-surface);
+}
