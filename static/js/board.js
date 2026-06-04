@@ -18,7 +18,8 @@ const Board = {
             try {
                 await API.updateBoard(this.boardId, {
                     title: document.getElementById('board-title-input').value,
-                    description: document.getElementById('board-description-input').value
+                    description: document.getElementById('board-description-input').value,
+                    user_id: Auth.getCurrentUser().id
                 });
                 Modals.closeBoard();
                 this.load();
@@ -43,18 +44,18 @@ const Board = {
 
             Sidebar.refresh(this.boardId);
 
-            const userRole = Auth.getUserRole(this.currentTeam);
-            Sidebar.updateRole(userRole);
+            const role = Permissions.getRole(this.currentTeam);
+            Sidebar.updateRole(role);
 
-            if (userRole === 'none') {
+            if (!Permissions.canViewBoard(role)) {
                 this.showState('🔒', 'Доступ запрещён', 'Вы не являетесь участником этой команды', [
                     { text: 'Войти', href: '/login', primary: true }
                 ]);
                 return;
             }
 
-            this.applyPermissions();
-            this.showRoleInfo(userRole);
+            this.applyPermissions(role);
+            this.showRoleInfo(role);
             await this.loadColumns();
         } catch (error) {
             console.error('Error loading board:', error);
@@ -78,11 +79,8 @@ const Board = {
             const link = node.querySelector('[data-field="action-link"]');
             link.textContent = action.text;
             link.href = action.href;
-            if (action.primary) {
-                link.classList.add('btn');
-            } else {
-                link.classList.add('btn', 'btn-secondary');
-            }
+            link.classList.add('btn');
+            if (!action.primary) link.classList.add('btn-secondary');
             actionsContainer.appendChild(node);
         });
 
@@ -93,61 +91,53 @@ const Board = {
         DOM.hide(document.getElementById('board-state'));
     },
 
-    applyPermissions() {
-        const userRole = Auth.getUserRole(this.currentTeam);
-
-        document.querySelectorAll('.member-only').forEach(el => {
-            el.classList.toggle('hidden', !['leader', 'developer'].includes(userRole));
-        });
-
-        document.querySelectorAll('.leader-only').forEach(el => {
-            el.classList.toggle('hidden', userRole !== 'leader');
-        });
-
-        document.querySelectorAll('.curator-only').forEach(el => {
-            el.classList.toggle('hidden', userRole !== 'curator');
+    applyPermissions(role) {
+        document.querySelectorAll('.board-actions.leader-only').forEach(el => {
+            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
         });
     },
 
-    showRoleInfo(userRole) {
+    showRoleInfo(role) {
         const container = document.getElementById('role-info');
+        const descEl = document.getElementById('role-description');
         if (!container) return;
 
-        const labels = {
-            leader: '👑 Руководитель',
-            developer: '👨‍💻 Разработчик',
-            curator: '👁️ Куратор (только просмотр)',
-            none: 'Не участник'
+        const icons = {
+            leader: '👑',
+            developer: '👨‍💻',
+            curator: '👁️'
         };
 
         DOM.clear(container);
         const badge = DOM.clone('tpl-role-badge');
         const badgeEl = badge.querySelector('[data-field="badge"]');
-        badgeEl.textContent = labels[userRole] || labels.none;
-        badgeEl.classList.add(`role-badge--${userRole}`);
+        badgeEl.textContent = `${icons[role] || ''} ${Permissions.getRoleLabel(role)}`.trim();
+        badgeEl.classList.add(`role-badge--${role}`);
         container.appendChild(badge);
         DOM.show(container);
+
+        if (descEl) {
+            descEl.textContent = Permissions.getRoleDescription(role);
+            DOM.show(descEl);
+        }
     },
 
     async loadColumns() {
         const columns = await API.getColumns(this.boardId);
-        this.render(columns);
+        const role = Permissions.getRole(this.currentTeam);
+        this.render(columns, role);
 
-        const userRole = Auth.getUserRole(this.currentTeam);
-        if (['leader', 'developer'].includes(userRole)) {
-            DragDrop.init(columns);
+        if (role === 'leader' || role === 'developer') {
+            DragDrop.init(columns, role);
         }
     },
 
-    render(columns) {
+    render(columns, role) {
         const container = document.getElementById('board-container');
         if (!container) return;
 
+        const userId = Auth.getCurrentUser().id;
         DOM.clear(container);
-
-        const userRole = Auth.getUserRole(this.currentTeam);
-        const canAddCards = ['leader', 'developer'].includes(userRole);
-        const canManageColumns = ['leader', 'developer'].includes(userRole);
 
         columns.forEach(column => {
             const columnNode = DOM.clone('tpl-board-column');
@@ -161,7 +151,7 @@ const Board = {
             cardsList.id = `cards-${column.id}`;
             titleBtn.textContent = column.title;
 
-            if (canManageColumns) {
+            if (Permissions.canManageColumns(role)) {
                 DOM.show(menuBtn);
                 const openColumn = () => Modals.openColumn(column.id, column.title);
                 titleBtn.addEventListener('click', openColumn);
@@ -171,10 +161,10 @@ const Board = {
             }
 
             (column.cards || []).forEach(card => {
-                cardsList.appendChild(this.createCardElement(card));
+                cardsList.appendChild(this.createCardElement(card, role, userId));
             });
 
-            if (canAddCards) {
+            if (Permissions.canCreateCard(role)) {
                 DOM.show(addCardBtn);
                 addCardBtn.addEventListener('click', () => Modals.openCard(null, column.id));
             }
@@ -182,7 +172,7 @@ const Board = {
             container.appendChild(columnNode);
         });
 
-        if (canManageColumns) {
+        if (Permissions.canManageColumns(role)) {
             const addColumnNode = DOM.clone('tpl-add-column-btn');
             addColumnNode.querySelector('[data-field="add-column-btn"]')
                 .addEventListener('click', () => Columns.add());
@@ -190,7 +180,7 @@ const Board = {
         }
     },
 
-    createCardElement(card) {
+    createCardElement(card, role, userId) {
         const node = DOM.clone('tpl-card-item');
         const cardEl = node.querySelector('[data-field="card"]');
         const priority = card.priority || 'medium';
@@ -221,6 +211,10 @@ const Board = {
             DOM.show(node.querySelector('[data-field="comments"]'));
         }
 
+        if (Permissions.canMoveCard(role, card, userId)) {
+            cardEl.classList.add('card-item--draggable');
+        }
+
         cardEl.addEventListener('click', () => Modals.openCard(card.id));
         return node;
     },
@@ -228,7 +222,7 @@ const Board = {
     async deleteBoard() {
         if (!confirm('Удалить эту доску?')) return;
 
-        await API.deleteBoard(this.boardId);
+        await API.deleteBoard(this.boardId, { user_id: Auth.getCurrentUser().id });
         await Auth.redirectToDefaultBoard();
     }
 };

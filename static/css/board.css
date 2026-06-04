@@ -168,3 +168,22 @@
     background: var(--color-danger);
     color: #fff;
 }
+
+.board-role-desc {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin-top: 0.35rem;
+    max-width: 480px;
+}
+
+.card-item--draggable {
+    cursor: grab;
+}
+
+.card-item--draggable:active {
+    cursor: grabbing;
+}
+
+.card-item:not(.card-item--draggable) {
+    cursor: pointer;
+}

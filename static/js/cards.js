@@ -1,7 +1,20 @@
 const Cards = {
-    async loadCardForEdit(cardId) {
-        const card = await API.getCard(cardId);
-        const userRole = Auth.getUserRole(window.currentTeam);
+    showReadOnlyView(card) {
+        DOM.hide(document.getElementById('card-form'));
+        DOM.show(document.getElementById('card-view-only'));
+
+        document.getElementById('view-title').textContent = card.title;
+        document.getElementById('view-description').textContent = card.description || '—';
+
+        const priorityEl = document.getElementById('view-priority');
+        const priority = card.priority || 'medium';
+        priorityEl.textContent = PRIORITY_LABELS[priority] || priority;
+        priorityEl.className = `view-priority-badge view-priority-badge--${priority}`;
+    },
+
+    showEditForm(card, role) {
+        DOM.show(document.getElementById('card-form'));
+        DOM.hide(document.getElementById('card-view-only'));
 
         document.getElementById('card-modal-title').textContent = card.title;
         document.getElementById('card-id').value = card.id;
@@ -16,22 +29,31 @@ const Cards = {
 
         this.populateAssigneeSelect(card.assignee_id);
 
-        const cardForm = document.getElementById('card-form');
-        const viewOnly = document.getElementById('card-view-only');
+        const editActions = document.querySelector('#card-form .card-edit-actions');
+        if (editActions) {
+            editActions.classList.toggle('hidden', false);
+        }
 
-        if (userRole === 'curator') {
-            DOM.hide(cardForm);
-            DOM.show(viewOnly);
-            document.getElementById('view-title').textContent = card.title;
-            document.getElementById('view-description').textContent = card.description || '—';
+        document.getElementById('card-delete-btn')?.classList.toggle(
+            'hidden',
+            !Permissions.canDeleteCard(role)
+        );
 
-            const priorityEl = document.getElementById('view-priority');
-            const priority = card.priority || 'medium';
-            priorityEl.textContent = PRIORITY_LABELS[priority] || priority;
-            priorityEl.className = `view-priority-badge view-priority-badge--${priority}`;
+        document.querySelectorAll('#card-form .leader-only').forEach(el => {
+            el.classList.toggle('hidden', !Permissions.canAssign(role));
+        });
+    },
+
+    async loadCardForEdit(cardId) {
+        const card = await API.getCard(cardId);
+        const role = Permissions.getRole(window.currentTeam);
+        const userId = Auth.getCurrentUser().id;
+
+        if (Permissions.isReadOnlyCard(role, card, userId)) {
+            document.getElementById('card-modal-title').textContent = card.title;
+            this.showReadOnlyView(card);
         } else {
-            DOM.show(cardForm);
-            DOM.hide(viewOnly);
+            this.showEditForm(card, role);
         }
 
         Comments.loadComments(cardId);
@@ -64,7 +86,7 @@ const Cards = {
 
         const cardId = document.getElementById('card-id').value;
         const columnId = parseInt(document.getElementById('card-column-id').value);
-        const userRole = Auth.getUserRole(window.currentTeam);
+        const role = Permissions.getRole(window.currentTeam);
         const currentUser = Auth.getCurrentUser();
 
         const data = {
@@ -76,19 +98,20 @@ const Cards = {
             user_id: currentUser.id
         };
 
-        const assigneeSelect = document.getElementById('card-assignee-input');
-        if (assigneeSelect && userRole === 'leader') {
-            data.assignee_id = assigneeSelect.value ? parseInt(assigneeSelect.value) : null;
+        if (Permissions.canAssign(role)) {
+            const assigneeSelect = document.getElementById('card-assignee-input');
+            data.assignee_id = assigneeSelect?.value ? parseInt(assigneeSelect.value) : null;
         }
 
         try {
             if (cardId) {
                 await API.updateCard(parseInt(cardId), data);
             } else {
-                data.column_id = columnId;
-                if (userRole === 'leader') {
-                    data.created_by = currentUser.id;
+                if (!Permissions.canCreateCard(role)) {
+                    alert('Только руководитель может создавать задачи');
+                    return;
                 }
+                data.column_id = columnId;
                 await API.createCard(data);
             }
 
@@ -104,7 +127,7 @@ const Cards = {
         if (!cardId || !confirm('Удалить эту карточку?')) return;
 
         try {
-            await API.deleteCard(parseInt(cardId));
+            await API.deleteCard(parseInt(cardId), { user_id: Auth.getCurrentUser().id });
             Modals.closeCard();
             Board.loadColumns();
         } catch (error) {

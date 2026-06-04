@@ -43,17 +43,17 @@ const API = {
 
     getBoard: (id) => API.get(`/api/boards/${id}`),
     updateBoard: (id, data) => API.put(`/api/boards/${id}`, data),
-    deleteBoard: (id) => API.delete(`/api/boards/${id}`),
+    deleteBoard: (id, data) => API.delete(`/api/boards/${id}`, data),
     getColumns: (boardId) => API.get(`/api/boards/${boardId}/columns`),
 
     createColumn: (boardId, data) => API.post(`/api/boards/${boardId}/columns`, data),
     updateColumn: (id, data) => API.put(`/api/columns/${id}`, data),
-    deleteColumn: (id) => API.delete(`/api/columns/${id}`),
+    deleteColumn: (id, data) => API.delete(`/api/columns/${id}`, data),
 
     getCard: (id) => API.get(`/api/cards/${id}`),
     createCard: (data) => API.post('/api/cards', data),
     updateCard: (id, data) => API.put(`/api/cards/${id}`, data),
-    deleteCard: (id) => API.delete(`/api/cards/${id}`),
+    deleteCard: (id, data) => API.delete(`/api/cards/${id}`, data),
     moveCard: (id, data) => API.put(`/api/cards/${id}/move`, data),
 
     getComments: (cardId) => API.get(`/api/cards/${cardId}/comments`),

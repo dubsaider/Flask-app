@@ -22,10 +22,5 @@ def load_team(conn, team_row):
 
 
 def user_has_team_access(conn, team_row, user_id):
-    if team_row['curator_id'] == user_id:
-        return True
-    member = conn.execute(
-        'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
-        (team_row['id'], user_id)
-    ).fetchone()
-    return member is not None
+    from .permissions import get_user_role
+    return get_user_role(conn, team_row['id'], user_id) != 'none'

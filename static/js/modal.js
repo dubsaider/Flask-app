@@ -3,24 +3,21 @@ const Modals = {
         const modal = document.getElementById('card-modal');
         if (!modal) return;
 
-        const userRole = Auth.getUserRole(window.currentTeam);
+        const role = Permissions.getRole(window.currentTeam);
 
-        document.querySelectorAll('.curator-only').forEach(el => {
-            el.classList.toggle('hidden', userRole !== 'curator');
-        });
-
-        document.querySelectorAll('.member-only').forEach(el => {
-            el.classList.toggle('hidden', !['leader', 'developer'].includes(userRole));
-        });
-
-        document.querySelectorAll('.leader-only').forEach(el => {
-            el.classList.toggle('hidden', userRole !== 'leader');
-        });
+        if (!cardId && !Permissions.canCreateCard(role)) {
+            return;
+        }
 
         if (cardId) {
             Cards.loadCardForEdit(cardId);
         } else {
-            this.prepareNewCard(columnId);
+            this.prepareNewCard(columnId, role);
+        }
+
+        const commentForm = document.querySelector('#card-modal .comment-form');
+        if (commentForm) {
+            commentForm.classList.toggle('hidden', !Permissions.canComment(role));
         }
 
         modal.classList.add('active');
@@ -30,7 +27,7 @@ const Modals = {
         document.getElementById('card-modal')?.classList.remove('active');
     },
 
-    prepareNewCard(columnId) {
+    prepareNewCard(columnId, role) {
         document.getElementById('card-modal-title').textContent = 'Новая карточка';
         document.getElementById('card-id').value = '';
         document.getElementById('card-column-id').value = columnId;
@@ -42,6 +39,13 @@ const Modals = {
         DOM.show(document.getElementById('card-form'));
         DOM.hide(document.getElementById('card-view-only'));
         document.getElementById('comments-list')?.replaceChildren();
+
+        document.querySelector('#card-form .card-edit-actions')?.classList.remove('hidden');
+        document.getElementById('card-delete-btn')?.classList.add('hidden');
+        document.querySelectorAll('#card-form .leader-only').forEach(el => {
+            el.classList.toggle('hidden', !Permissions.canAssign(role));
+        });
+
         Cards.populateAssigneeSelect(null);
     },
 

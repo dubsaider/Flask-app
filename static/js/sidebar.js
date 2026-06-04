@@ -110,14 +110,8 @@ const Sidebar = {
         const roleEl = document.getElementById('sidebar-user-role');
         if (!roleEl) return;
 
-        const labels = {
-            leader: 'Руководитель',
-            developer: 'Разработчик',
-            curator: 'Куратор',
-            none: ''
-        };
-
-        roleEl.textContent = labels[roleKey] || '';
+        roleEl.textContent = Permissions.getRoleLabel(roleKey);
+        roleEl.title = Permissions.getRoleDescription(roleKey);
     },
 
     refresh(boardId) {
