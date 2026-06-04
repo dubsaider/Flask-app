@@ -1,0 +1,21 @@
+<!-- Модальное окно для колонки -->
+<div id="column-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="column-modal-title">Edit Column</h2>
+            <button class="btn-icon" onclick="Modals.closeColumn()">✕</button>
+        </div>
+        <form id="column-form">
+            <input type="hidden" id="column-id">
+            <div class="form-group">
+                <label for="column-title-input">Title</label>
+                <input type="text" id="column-title-input" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-danger" onclick="Columns.deleteColumn()">Delete</button>
+                <button type="button" class="btn btn-secondary" onclick="Modals.closeColumn()">Cancel</button>
+                <button type="submit" class="btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

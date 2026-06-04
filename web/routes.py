@@ -25,3 +25,8 @@ def teams_list():
 def team_detail(team_id):
     """Страница конкретной команды"""
     return render_template('team_detail.html', team_id=team_id)
+
+@web_bp.route('/login')
+def login():
+    """Страница входа"""
+    return render_template('login.html')

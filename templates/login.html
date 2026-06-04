@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Kanban Board{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 4rem auto;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+    
+    .login-title {
+        text-align: center;
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .login-subtitle {
+        text-align: center;
+        color: #5e6c84;
+        margin-bottom: 2rem;
+    }
+    
+    .user-login-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border: 2px solid #dfe1e6;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: none;
+        width: 100%;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+    
+    .user-login-item:hover {
+        border-color: #026aa7;
+        background: #f0f7ff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .user-login-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #026aa7;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+    
+    .user-login-info {
+        flex: 1;
+    }
+    
+    .user-login-name {
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+    
+    .user-login-email {
+        color: #5e6c84;
+        font-size: 0.85rem;
+    }
+    
+    .user-login-arrow {
+        color: #5e6c84;
+        font-size: 1.2rem;
+    }
+    
+    .back-link {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        color: #5e6c84;
+        text-decoration: none;
+    }
+    
+    .back-link:hover {
+        color: #026aa7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h1 class="login-title">Select User</h1>
+        <p class="login-subtitle">Choose a user to login as</p>
+        
+        <div id="login-users-list">
+            <div style="text-align: center; color: #5e6c84; padding: 2rem;">
+                Loading users...
+            </div>
+        </div>
+        
+        <a href="/" class="back-link">← Back to home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadLoginUsers() {
+    try {
+        const users = await API.getUsers();
+        const container = document.getElementById('login-users-list');
+        
+        container.innerHTML = users.map(user => `
+            <button class="user-login-item" onclick="Auth.login(${user.id}, '${user.username}')">
+                <div class="user-login-avatar">
+                    ${user.username.charAt(0).toUpperCase()}
+                </div>
+                <div class="user-login-info">
+                    <div class="user-login-name">${user.username}</div>
+                    <div class="user-login-email">${user.email}</div>
+                </div>
+                <span class="user-login-arrow">→</span>
+            </button>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('login-users-list').innerHTML = `
+            <div style="text-align: center; color: #eb5a46; padding: 2rem;">
+                Error loading users
+            </div>
+        `;
+    }
+}
+
+loadLoginUsers();
+</script>
+{% endblock %}
