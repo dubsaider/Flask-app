@@ -3,6 +3,7 @@ from .init import api_bp
 from database import get_db_context
 from models import User, Board
 from .helpers import load_team, user_has_team_access
+from . import permissions as perm
 
 @api_bp.route('/users', methods=['GET'])
 def get_users():
@@ -40,6 +41,7 @@ def get_user_workspace(user_id):
                     'name': team_row['name'],
                     'description': team_row['description'],
                 },
+                'role': perm.get_user_role(conn, team_row['id'], user_id),
                 'boards': [Board(board).to_dict() for board in boards]
             })
 

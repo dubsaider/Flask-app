@@ -1,13 +1,16 @@
 const Sidebar = {
     workspace: [],
     currentBoardId: null,
+    currentPage: 'board',
     collapsed: false,
 
-    async init(boardId) {
+    async init(boardId, pageName = 'board') {
         this.currentBoardId = boardId;
+        this.currentPage = pageName;
         this.restoreCollapsedState();
         this.bindEvents();
         await this.loadWorkspace();
+        this.updateNav();
         this.updateUserInfo();
     },
 
@@ -54,6 +57,21 @@ const Sidebar = {
         } catch (error) {
             console.error('Error loading workspace:', error);
         }
+    },
+
+    updateNav() {
+        const isLeader = this.workspace.some(group => group.role === 'leader');
+        document.getElementById('nav-dashboard')?.classList.toggle('hidden', !isLeader);
+
+        document.querySelectorAll('.sidebar-page-link').forEach(link => {
+            const active = link.dataset.page === this.currentPage;
+            link.classList.toggle('is-active', active);
+            if (active) {
+                link.setAttribute('aria-current', 'page');
+            } else {
+                link.removeAttribute('aria-current');
+            }
+        });
     },
 
     renderBoardList() {

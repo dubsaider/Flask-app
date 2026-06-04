@@ -8,3 +8,4 @@ from . import boards
 from . import columns
 from . import cards
 from . import comments
+from . import tasks

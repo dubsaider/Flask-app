@@ -12,3 +12,11 @@ def login():
 @web_bp.route('/board/<int:board_id>')
 def board_page(board_id):
     return render_template('board.html', board_id=board_id)
+
+@web_bp.route('/tasks')
+def tasks_page():
+    return render_template('tasks.html')
+
+@web_bp.route('/dashboard')
+def dashboard_page():
+    return render_template('dashboard.html')

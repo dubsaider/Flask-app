@@ -2,6 +2,8 @@ const Board = {
     boardId: null,
     currentBoard: null,
     currentTeam: null,
+    rawColumns: [],
+    currentRole: null,
 
     init(boardId) {
         this.boardId = boardId;
@@ -27,6 +29,8 @@ const Board = {
                 alert('Ошибка сохранения доски: ' + error.message);
             }
         });
+
+        TaskFilters.bind(() => this.applyBoardFilters());
     },
 
     async load() {
@@ -45,7 +49,11 @@ const Board = {
             Sidebar.refresh(this.boardId);
 
             const role = Permissions.getRole(this.currentTeam);
+            this.currentRole = role;
             Sidebar.updateRole(role);
+
+            TaskFilters.populateAssignees(this.currentTeam.members);
+            TaskFilters.showMineOption(role === 'leader');
 
             if (!Permissions.canViewBoard(role)) {
                 this.showState('🔒', 'Доступ запрещён', 'Вы не являетесь участником этой команды', [
@@ -123,12 +131,22 @@ const Board = {
     },
 
     async loadColumns() {
-        const columns = await API.getColumns(this.boardId);
-        const role = Permissions.getRole(this.currentTeam);
-        this.render(columns, role);
+        this.rawColumns = await API.getColumns(this.boardId);
+        this.applyBoardFilters();
+    },
 
-        if (role === 'leader' || role === 'developer') {
-            DragDrop.init(columns, role);
+    applyBoardFilters() {
+        const filters = TaskFilters.read();
+        const userId = Auth.getCurrentUser().id;
+        const filtered = TaskFilters.filterColumns(this.rawColumns, filters, userId);
+        const total = TaskFilters.countCards(this.rawColumns);
+        const shown = TaskFilters.countCards(filtered);
+
+        TaskFilters.updateCount(shown, total);
+        this.render(filtered, this.currentRole);
+
+        if (this.currentRole === 'leader' || this.currentRole === 'developer') {
+            DragDrop.init(filtered, this.currentRole);
         }
     },
 

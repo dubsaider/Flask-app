@@ -1,0 +1,37 @@
+{% extends "base_app.html" %}
+
+{% block title %}Мои задачи — Kanban Board{% endblock %}
+
+{% block content %}
+<div id="tasks-app" class="page-app">
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">Мои задачи</h1>
+            <p class="page-subtitle">Все назначенные вам задачи по проектам</p>
+        </div>
+        <div class="page-header-actions">
+            <label class="group-toggle">
+                <span>Группировка:</span>
+                <select id="tasks-group-by" class="form-control form-control--compact">
+                    <option value="board" selected>По доскам</option>
+                    <option value="none">Список</option>
+                    <option value="priority">По приоритету</option>
+                    <option value="status">По статусу</option>
+                </select>
+            </label>
+        </div>
+    </header>
+
+    {% include 'components/task_filters.html' %}
+
+    <div id="tasks-content" class="tasks-content">
+        <p class="page-loading">Загрузка задач...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/filters.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+<script src="{{ url_for('static', filename='js/page.js') }}"></script>
+{% endblock %}

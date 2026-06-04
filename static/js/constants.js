@@ -18,3 +18,9 @@ const ROLE_DESCRIPTIONS = {
     curator: 'Просмотр и комментарии без редактирования',
     none: ''
 };
+
+const STATUS_LABELS = {
+    active: 'Активна',
+    completed: 'Завершена',
+    archived: 'Архив'
+};

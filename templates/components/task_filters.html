@@ -1,0 +1,50 @@
+<section class="task-filters" id="task-filters">
+    <div class="task-filters__row">
+        <div class="filter-group filter-group--search">
+            <label class="filter-label" for="filter-search">Поиск</label>
+            <input type="search" id="filter-search" class="form-control" placeholder="Название или описание...">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label" for="filter-priority">Приоритет</label>
+            <select id="filter-priority" class="form-control">
+                <option value="">Все</option>
+                <option value="low">Низкий</option>
+                <option value="medium">Средний</option>
+                <option value="high">Высокий</option>
+                <option value="critical">Критический</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label" for="filter-status">Статус</label>
+            <select id="filter-status" class="form-control">
+                <option value="">Все</option>
+                <option value="active">Активна</option>
+                <option value="completed">Завершена</option>
+                <option value="archived">Архив</option>
+            </select>
+        </div>
+
+        <div class="filter-group filter-group--assignee">
+            <label class="filter-label" for="filter-assignee">Исполнитель</label>
+            <select id="filter-assignee" class="form-control">
+                <option value="">Все</option>
+                <option value="unassigned">Не назначен</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="task-filters__row task-filters__row--checks">
+        <label class="filter-check">
+            <input type="checkbox" id="filter-overdue">
+            <span>Только просроченные</span>
+        </label>
+        <label class="filter-check filter-check--mine hidden" id="filter-mine-wrap">
+            <input type="checkbox" id="filter-mine">
+            <span>Только мои задачи</span>
+        </label>
+        <button type="button" class="btn btn-secondary btn-sm" id="filter-reset">Сбросить</button>
+        <span class="filter-result-count" id="filter-result-count"></span>
+    </div>
+</section>

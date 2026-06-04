@@ -9,13 +9,24 @@
                 type="button"
                 class="sidebar-collapse-btn"
                 id="sidebar-collapse-btn"
-                aria-label="Свернуть панель"
                 aria-expanded="true"
+                aria-label="Свернуть панель"
                 title="Свернуть панель"
             >
                 <span class="sidebar-collapse-icon" aria-hidden="true">‹</span>
             </button>
         </header>
+
+        <section class="sidebar-pages" id="sidebar-pages">
+            <a href="/tasks" class="sidebar-page-link" id="nav-tasks" data-page="tasks">
+                <span class="sidebar-page-icon" aria-hidden="true">✓</span>
+                <span class="sidebar-page-text">Мои задачи</span>
+            </a>
+            <a href="/dashboard" class="sidebar-page-link hidden" id="nav-dashboard" data-page="dashboard">
+                <span class="sidebar-page-icon" aria-hidden="true">📊</span>
+                <span class="sidebar-page-text">Дашборд</span>
+            </a>
+        </section>
 
         <nav class="sidebar-nav" id="sidebar-nav" aria-label="Доски">
             <div class="sidebar-nav-scroll" id="sidebar-board-groups"></div>

@@ -38,6 +38,8 @@ const API = {
 
     getUsers: () => API.get('/api/users'),
     getUserWorkspace: (userId) => API.get(`/api/users/${userId}/workspace`),
+    getUserTasks: (userId) => API.get(`/api/users/${userId}/tasks`),
+    getLeaderDashboard: (userId) => API.get(`/api/users/${userId}/leader-dashboard`),
 
     getTeam: (id) => API.get(`/api/teams/${id}`),
 

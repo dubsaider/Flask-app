@@ -1,0 +1,23 @@
+{% extends "base_app.html" %}
+
+{% block title %}Дашборд — Kanban Board{% endblock %}
+
+{% block content %}
+<div id="dashboard-app" class="page-app">
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">Дашборд руководителя</h1>
+            <p class="page-subtitle">Обзор нагрузки и статуса задач по командам</p>
+        </div>
+    </header>
+
+    <div id="dashboard-content" class="dashboard-content">
+        <p class="page-loading">Загрузка...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/page.js') }}"></script>
+{% endblock %}

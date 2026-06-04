@@ -84,3 +84,88 @@
 <template id="tpl-role-badge">
     <span class="role-badge" data-field="badge"></span>
 </template>
+
+<template id="tpl-task-group">
+    <section class="task-group">
+        <header class="task-group__header">
+            <h2 class="task-group__title" data-field="title"></h2>
+            <span class="task-group__count" data-field="count"></span>
+        </header>
+        <ul class="task-list" data-field="list"></ul>
+    </section>
+</template>
+
+<template id="tpl-task-row">
+    <li class="task-row">
+        <a class="task-row__link" data-field="link">
+            <span class="task-row__stripe" data-field="stripe"></span>
+            <span class="task-row__body">
+                <span class="task-row__title" data-field="title"></span>
+                <span class="task-row__meta" data-field="meta"></span>
+            </span>
+        </a>
+    </li>
+</template>
+
+<template id="tpl-stat-card">
+    <article class="stat-card">
+        <span class="stat-card__value" data-field="value"></span>
+        <span class="stat-card__label" data-field="label"></span>
+    </article>
+</template>
+
+<template id="tpl-dashboard-team">
+    <section class="dashboard-team">
+        <header class="dashboard-team__header">
+            <h2 class="dashboard-team__title" data-field="team-name"></h2>
+            <p class="dashboard-team__boards" data-field="boards"></p>
+        </header>
+        <div class="dashboard-team__stats" data-field="stats"></div>
+        <div class="dashboard-team__grid">
+            <div class="dashboard-panel" data-field="assignee-panel">
+                <h3 class="dashboard-panel__title">Нагрузка по исполнителям</h3>
+                <div class="dashboard-panel__body" data-field="assignee-list"></div>
+            </div>
+            <div class="dashboard-panel" data-field="priority-panel">
+                <h3 class="dashboard-panel__title">По приоритету</h3>
+                <div class="dashboard-panel__body" data-field="priority-list"></div>
+            </div>
+            <div class="dashboard-panel dashboard-panel--wide" data-field="issues-panel">
+                <h3 class="dashboard-panel__title">Требуют внимания</h3>
+                <div class="dashboard-panel__body" data-field="issues-list"></div>
+            </div>
+        </div>
+    </section>
+</template>
+
+<template id="tpl-assignee-bar">
+    <div class="assignee-bar">
+        <span class="assignee-bar__name" data-field="name"></span>
+        <div class="assignee-bar__track">
+            <div class="assignee-bar__fill" data-field="fill"></div>
+        </div>
+        <span class="assignee-bar__count" data-field="count"></span>
+    </div>
+</template>
+
+<template id="tpl-priority-row">
+    <div class="priority-row">
+        <span class="priority-row__label" data-field="label"></span>
+        <span class="priority-row__bar" data-field="bar"></span>
+        <span class="priority-row__count" data-field="count"></span>
+    </div>
+</template>
+
+<template id="tpl-issue-row">
+    <a class="issue-row" data-field="link">
+        <span class="issue-row__title" data-field="title"></span>
+        <span class="issue-row__meta" data-field="meta"></span>
+    </a>
+</template>
+
+<template id="tpl-empty-state">
+    <div class="empty-state">
+        <span class="empty-state__icon" data-field="icon"></span>
+        <p class="empty-state__text" data-field="text"></p>
+    </div>
+</template>
