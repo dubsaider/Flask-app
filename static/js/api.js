@@ -41,6 +41,14 @@ const API = {
     getUserTasks: (userId) => API.get(`/api/users/${userId}/tasks`),
     getLeaderDashboard: (userId) => API.get(`/api/users/${userId}/leader-dashboard`),
 
+    getNotifications: (userId) => API.get(`/api/users/${userId}/notifications?user_id=${userId}`),
+    getUnreadNotificationCount: (userId) =>
+        API.get(`/api/users/${userId}/notifications/unread-count?user_id=${userId}`),
+    markNotificationRead: (id, userId) =>
+        API.put(`/api/notifications/${id}/read`, { user_id: userId }),
+    markAllNotificationsRead: (userId) =>
+        API.put(`/api/users/${userId}/notifications/read-all`, { user_id: userId }),
+
     getTeam: (id) => API.get(`/api/teams/${id}`),
 
     getBoard: (id) => API.get(`/api/boards/${id}`),

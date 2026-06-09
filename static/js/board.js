@@ -72,6 +72,7 @@ const Board = {
 
             this.applyPermissions(role);
             await this.loadColumns();
+            this.openCardFromQuery();
         } catch (error) {
             console.error('Error loading board:', error);
             this.showState('⚠️', 'Ошибка', error.message, []);
@@ -118,6 +119,17 @@ const Board = {
     async loadColumns() {
         this.rawColumns = await API.getColumns(this.boardId);
         this.applyBoardFilters();
+    },
+
+    openCardFromQuery() {
+        const cardId = parseInt(new URLSearchParams(window.location.search).get('card'), 10);
+        if (!cardId) return;
+
+        Modals.openCard(cardId);
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete('card');
+        window.history.replaceState({}, '', url.pathname + url.search);
     },
 
     applyBoardFilters() {

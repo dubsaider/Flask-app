@@ -12,6 +12,7 @@ const Sidebar = {
         await this.loadWorkspace();
         this.updateNav();
         this.updateUserInfo();
+        Notifications.init();
     },
 
     bindEvents() {

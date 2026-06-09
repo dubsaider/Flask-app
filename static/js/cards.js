@@ -121,6 +121,7 @@ const Cards = {
 
             Modals.closeCard();
             Board.loadColumns();
+            Notifications.refresh();
         } catch (error) {
             alert('Ошибка сохранения: ' + error.message);
         }
@@ -134,6 +135,7 @@ const Cards = {
             await API.deleteCard(parseInt(cardId), { user_id: Auth.getCurrentUser().id });
             Modals.closeCard();
             Board.loadColumns();
+            Notifications.refresh();
         } catch (error) {
             alert('Ошибка удаления: ' + error.message);
         }

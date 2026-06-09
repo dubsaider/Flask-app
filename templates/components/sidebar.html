@@ -5,16 +5,29 @@
                 <span class="sidebar-brand-icon" aria-hidden="true">KB</span>
                 <span class="sidebar-brand-text">Kanban</span>
             </div>
-            <button
-                type="button"
-                class="sidebar-collapse-btn"
-                id="sidebar-collapse-btn"
-                aria-expanded="true"
-                aria-label="Свернуть панель"
-                title="Свернуть панель"
-            >
-                <span class="sidebar-collapse-icon" aria-hidden="true">‹</span>
-            </button>
+            <div class="sidebar-header-actions">
+                <button
+                    type="button"
+                    class="sidebar-notify-btn"
+                    id="sidebar-notify-btn"
+                    aria-expanded="false"
+                    aria-controls="notifications-panel"
+                    title="Уведомления"
+                >
+                    <span aria-hidden="true">🔔</span>
+                    <span class="sidebar-notify-badge hidden" id="sidebar-notify-badge">0</span>
+                </button>
+                <button
+                    type="button"
+                    class="sidebar-collapse-btn"
+                    id="sidebar-collapse-btn"
+                    aria-expanded="true"
+                    aria-label="Свернуть панель"
+                    title="Свернуть панель"
+                >
+                    <span class="sidebar-collapse-icon" aria-hidden="true">‹</span>
+                </button>
+            </div>
         </header>
 
         <section class="sidebar-pages" id="sidebar-pages">
@@ -42,5 +55,15 @@
                 <button type="button" class="sidebar-logout-btn" id="sidebar-logout-btn">Выйти</button>
             </div>
         </footer>
+
+        <section class="notifications-panel hidden" id="notifications-panel" aria-label="Уведомления">
+            <header class="notifications-panel__header">
+                <h2 class="notifications-panel__title">Уведомления</h2>
+                <div class="notifications-panel__actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="notifications-read-all">Прочитать все</button>
+                </div>
+            </header>
+            <div class="notifications-panel__list" id="notifications-list"></div>
+        </section>
     </div>
 </aside>

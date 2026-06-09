@@ -79,6 +79,20 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Уведомления
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    board_id INTEGER,
+    card_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE SET NULL,
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL
+);
+
 -- Тестовые данные
 INSERT OR IGNORE INTO users (id, username, email) VALUES 
     (1, 'alice', 'alice@example.com'),      -- разработчик

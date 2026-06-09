@@ -3,6 +3,7 @@ from .init import api_bp
 from database import get_db_context
 from models import Comment, User
 from . import permissions as perm
+from .notify_helpers import notify_comment
 
 
 def _forbidden(message):
@@ -34,6 +35,7 @@ def comments_handler(card_id):
                 'INSERT INTO comments (text, card_id, user_id) VALUES (?, ?, ?)',
                 (data['text'], card_id, user_id)
             )
+            notify_comment(conn, card_id, user_id)
             comment = conn.execute('SELECT * FROM comments WHERE id = ?', (cursor.lastrowid,)).fetchone()
             return jsonify(Comment(comment).to_dict()), 201
 

@@ -38,6 +38,7 @@ const Comments = {
 
             textarea.value = '';
             this.loadComments(this.currentCardId);
+            Notifications.refresh();
         } catch (error) {
             console.error('Error adding comment:', error);
         }

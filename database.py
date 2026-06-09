@@ -25,6 +25,27 @@ def migrate_db(conn):
 
     conn.execute("UPDATE cards SET status = 'active' WHERE status = 'completed'")
 
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            board_id INTEGER,
+            card_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE SET NULL,
+            FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE SET NULL
+        )
+    ''')
+
+    notification_fields = _table_columns(conn, 'notifications')
+    if 'board_id' not in notification_fields:
+        conn.execute('ALTER TABLE notifications ADD COLUMN board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL')
+    if 'card_id' not in notification_fields:
+        conn.execute('ALTER TABLE notifications ADD COLUMN card_id INTEGER REFERENCES cards(id) ON DELETE SET NULL')
+
 def init_db():
     """Инициализация базы данных из schema.sql"""
     with get_db() as conn:

@@ -150,3 +150,26 @@ class Comment:
         if self.author:
             result['author'] = self.author.to_dict()
         return result
+
+
+class Notification:
+    """In-app уведомление"""
+    def __init__(self, row):
+        self.id = row['id']
+        self.user_id = row['user_id']
+        self.message = row['message']
+        self.is_read = bool(row['is_read'])
+        self.board_id = row['board_id'] if 'board_id' in row.keys() else None
+        self.card_id = row['card_id'] if 'card_id' in row.keys() else None
+        self.created_at = row['created_at']
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'message': self.message,
+            'is_read': self.is_read,
+            'board_id': self.board_id,
+            'card_id': self.card_id,
+            'created_at': self.created_at,
+        }

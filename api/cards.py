@@ -4,6 +4,7 @@ from .init import api_bp
 from database import get_db_context
 from models import Card, User, Comment
 from . import permissions as perm
+from .notify_helpers import notify_assignee, notify_comment
 
 
 def _forbidden(message):
@@ -43,6 +44,9 @@ def create_card():
              data.get('deadline'))
         )
         card = conn.execute('SELECT * FROM cards WHERE id = ?', (cursor.lastrowid,)).fetchone()
+        assignee_id = data.get('assignee_id')
+        if assignee_id:
+            notify_assignee(conn, card['id'], assignee_id, user_id, action='assigned')
         return jsonify(Card(card).to_dict()), 201
 
 
@@ -93,6 +97,10 @@ def card_handler(card_id):
                  data.get('priority', 'medium'), new_status,
                  data.get('deadline'), datetime.now(), card_id)
             )
+
+            if assignee_id and assignee_id != existing['assignee_id']:
+                notify_assignee(conn, card_id, assignee_id, user_id, action='reassigned')
+
             card = conn.execute('SELECT * FROM cards WHERE id = ?', (card_id,)).fetchone()
             column = conn.execute(
                 'SELECT is_done FROM columns WHERE id = ?',
