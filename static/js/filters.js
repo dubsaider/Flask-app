@@ -22,11 +22,14 @@ const TaskFilters = {
             if (!text.includes(filters.search)) return false;
         }
         if (filters.priority && card.priority !== filters.priority) return false;
-        if (filters.status && card.status !== filters.status) return false;
+        if (filters.status && TaskWorkflow.status(card) !== filters.status) return false;
         if (filters.assignee === 'unassigned' && card.assignee_id) return false;
         if (filters.assignee && filters.assignee !== 'unassigned' &&
             String(card.assignee_id) !== filters.assignee) return false;
-        if (filters.overdue && !this.isOverdue(card.deadline)) return false;
+        if (filters.overdue) {
+            if (!this.isOverdue(card.deadline)) return false;
+            if (TaskWorkflow.status(card) !== 'active') return false;
+        }
         if (filters.mine && card.assignee_id !== userId) return false;
         return true;
     },
@@ -96,10 +99,30 @@ const TaskFilters = {
     },
 
     updateCount(shown, total) {
-        const el = document.getElementById('filter-result-count');
-        if (!el) return;
-        el.textContent = shown === total
+        const text = shown === total
             ? `Показано: ${total}`
             : `Показано: ${shown} из ${total}`;
+
+        document.querySelectorAll('.filter-result-count').forEach(el => {
+            if (el.id === 'filter-result-count') {
+                el.textContent = shown === total ? '' : `${shown}/${total}`;
+            } else {
+                el.textContent = text;
+            }
+        });
+
+        document.getElementById('filter-toggle')?.classList.toggle('is-filtered', shown !== total);
+    },
+
+    initBoardPanel() {
+        const toggle = document.getElementById('filter-toggle');
+        const panel = document.getElementById('board-filters-panel');
+        if (!toggle || !panel) return;
+
+        toggle.addEventListener('click', () => {
+            const willOpen = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !willOpen);
+            toggle.setAttribute('aria-expanded', String(willOpen));
+        });
     }
 };

@@ -192,6 +192,12 @@
     line-height: 1.5;
 }
 
+.form-hint {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
 .form-control--priority option[value="low"] { color: #61bd4f; }
 .form-control--priority option[value="critical"] { color: #b04632; }
 
@@ -393,6 +399,11 @@
 .btn-danger {
     background: var(--color-danger);
     color: #fff;
+}
+
+.btn-sm {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
 }
 
 .btn-icon {

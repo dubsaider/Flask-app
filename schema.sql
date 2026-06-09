@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS columns (
     title TEXT NOT NULL,
     position INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
+    is_done INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
 );
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS cards (
     assignee_id INTEGER,
     created_by INTEGER,  -- кто создал задачу (руководитель)
     priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'critical')),
-    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'completed', 'archived')),
+    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'archived')),
     deadline TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -101,14 +102,14 @@ INSERT OR IGNORE INTO boards (id, title, description, team_id) VALUES
     (1, 'Sprint 1', 'First sprint board', 1),
     (2, 'Design Tasks', 'Design related tasks', 2);
 
-INSERT OR IGNORE INTO columns (id, title, position, board_id) VALUES 
-    (1, 'To Do', 0, 1),
-    (2, 'In Progress', 1, 1),
-    (3, 'Review', 2, 1),
-    (4, 'Done', 3, 1),
-    (5, 'To Do', 0, 2),
-    (6, 'In Progress', 1, 2),
-    (7, 'Done', 2, 2);
+INSERT OR IGNORE INTO columns (id, title, position, board_id, is_done) VALUES 
+    (1, 'To Do', 0, 1, 0),
+    (2, 'In Progress', 1, 1, 0),
+    (3, 'Review', 2, 1, 0),
+    (4, 'Done', 3, 1, 1),
+    (5, 'To Do', 0, 2, 0),
+    (6, 'In Progress', 1, 2, 0),
+    (7, 'Done', 2, 2, 1);
 
 INSERT OR IGNORE INTO cards (id, title, description, position, column_id, assignee_id, created_by, priority, status) VALUES 
     (1, 'Setup project', 'Initialize repository and project structure', 0, 1, 1, 3, 'high', 'active'),

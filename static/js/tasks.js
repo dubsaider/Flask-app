@@ -59,7 +59,7 @@ const TasksPage = {
             } else if (groupBy === 'priority') {
                 key = PRIORITY_LABELS[task.priority] || task.priority;
             } else if (groupBy === 'status') {
-                key = STATUS_LABELS[task.status] || task.status;
+                key = TaskWorkflow.label(task);
             }
             if (!map.has(key)) map.set(key, []);
             map.get(key).push(task);
@@ -89,8 +89,9 @@ const TasksPage = {
         stripe.classList.add(`task-row__stripe--${priority}`);
         DOM.setField(row, 'title', task.title);
 
-        const statusLabel = STATUS_LABELS[task.status] || task.status;
-        const overdue = TaskFilters.isOverdue(task.deadline) ? ' · просрочена' : '';
+        const statusLabel = TaskWorkflow.label(task);
+        const overdue = TaskFilters.isOverdue(task.deadline) && TaskWorkflow.status(task) === 'active'
+            ? ' · просрочена' : '';
         DOM.setField(row, 'meta',
             `${task.board_title} · ${task.column_title} · ${PRIORITY_LABELS[priority]} · ${statusLabel}${overdue}`
         );

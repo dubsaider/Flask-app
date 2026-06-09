@@ -19,8 +19,21 @@ const ROLE_DESCRIPTIONS = {
     none: ''
 };
 
-const STATUS_LABELS = {
-    active: 'Активна',
+const WORKFLOW_LABELS = {
+    active: 'В работе',
     completed: 'Завершена',
-    archived: 'Архив'
+    archived: 'В архиве'
+};
+
+const TaskWorkflow = {
+    status(card) {
+        if (card.workflow_status) return card.workflow_status;
+        if (card.status === 'archived') return 'archived';
+        if (card.is_completed || card.column_is_done) return 'completed';
+        return 'active';
+    },
+
+    label(card) {
+        return WORKFLOW_LABELS[this.status(card)] || this.status(card);
+    }
 };

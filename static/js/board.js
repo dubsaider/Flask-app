@@ -14,6 +14,7 @@ const Board = {
     bindActions() {
         document.getElementById('edit-board-btn')?.addEventListener('click', () => Modals.openBoard());
         document.getElementById('delete-board-btn')?.addEventListener('click', () => this.deleteBoard());
+        document.getElementById('add-column-toolbar-btn')?.addEventListener('click', () => Columns.add());
 
         document.getElementById('board-form')?.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -31,6 +32,7 @@ const Board = {
         });
 
         TaskFilters.bind(() => this.applyBoardFilters());
+        TaskFilters.initBoardPanel();
     },
 
     async load() {
@@ -40,7 +42,13 @@ const Board = {
         try {
             this.currentBoard = await API.getBoard(this.boardId);
             document.getElementById('board-title').textContent = this.currentBoard.title;
-            document.getElementById('board-description').textContent = this.currentBoard.description || '';
+
+            const descEl = document.getElementById('board-description');
+            if (descEl) {
+                const desc = this.currentBoard.description || '';
+                descEl.textContent = desc;
+                descEl.classList.toggle('hidden', !desc);
+            }
 
             this.currentTeam = await API.getTeam(this.currentBoard.team_id);
             window.currentTeam = this.currentTeam;
@@ -63,7 +71,6 @@ const Board = {
             }
 
             this.applyPermissions(role);
-            this.showRoleInfo(role);
             await this.loadColumns();
         } catch (error) {
             console.error('Error loading board:', error);
@@ -103,31 +110,9 @@ const Board = {
         document.querySelectorAll('.board-actions.leader-only').forEach(el => {
             el.classList.toggle('hidden', !Permissions.canManageBoard(role));
         });
-    },
-
-    showRoleInfo(role) {
-        const container = document.getElementById('role-info');
-        const descEl = document.getElementById('role-description');
-        if (!container) return;
-
-        const icons = {
-            leader: '👑',
-            developer: '👨‍💻',
-            curator: '👁️'
-        };
-
-        DOM.clear(container);
-        const badge = DOM.clone('tpl-role-badge');
-        const badgeEl = badge.querySelector('[data-field="badge"]');
-        badgeEl.textContent = `${icons[role] || ''} ${Permissions.getRoleLabel(role)}`.trim();
-        badgeEl.classList.add(`role-badge--${role}`);
-        container.appendChild(badge);
-        DOM.show(container);
-
-        if (descEl) {
-            descEl.textContent = Permissions.getRoleDescription(role);
-            DOM.show(descEl);
-        }
+        document.getElementById('add-column-toolbar-btn')?.classList.toggle(
+            'hidden', !Permissions.canManageColumns(role)
+        );
     },
 
     async loadColumns() {
@@ -146,7 +131,7 @@ const Board = {
         this.render(filtered, this.currentRole);
 
         if (this.currentRole === 'leader' || this.currentRole === 'developer') {
-            DragDrop.init(filtered, this.currentRole);
+            DragDrop.init(this.rawColumns, this.currentRole);
         }
     },
 
@@ -162,16 +147,27 @@ const Board = {
             const columnEl = columnNode.querySelector('[data-field="column"]');
             const titleBtn = columnNode.querySelector('[data-field="title-btn"]');
             const menuBtn = columnNode.querySelector('[data-field="menu-btn"]');
+            const dragHandle = columnNode.querySelector('[data-field="drag-handle"]');
             const cardsList = columnNode.querySelector('[data-field="cards-list"]');
             const addCardBtn = columnNode.querySelector('[data-field="add-card-btn"]');
 
             columnEl.dataset.columnId = column.id;
+            if (column.is_done) {
+                columnEl.classList.add('column--done');
+            }
             cardsList.id = `cards-${column.id}`;
             titleBtn.textContent = column.title;
 
             if (Permissions.canManageColumns(role)) {
+                columnEl.classList.add('column--manageable');
                 DOM.show(menuBtn);
-                const openColumn = () => Modals.openColumn(column.id, column.title);
+                DOM.show(dragHandle);
+                titleBtn.title = 'Настройки колонки';
+                menuBtn.title = 'Настройки колонки';
+                const openColumn = (event) => {
+                    event.stopPropagation();
+                    Modals.openColumn(column.id, column.title, column.is_done);
+                };
                 titleBtn.addEventListener('click', openColumn);
                 menuBtn.addEventListener('click', openColumn);
             } else {
@@ -231,6 +227,12 @@ const Board = {
 
         if (Permissions.canMoveCard(role, card, userId)) {
             cardEl.classList.add('card-item--draggable');
+        }
+
+        if (card.status === 'archived') {
+            cardEl.classList.add('card-item--archived');
+        } else if (card.is_completed) {
+            cardEl.classList.add('card-item--completed');
         }
 
         cardEl.addEventListener('click', () => Modals.openCard(card.id));

@@ -30,8 +30,9 @@
 <template id="tpl-board-column">
     <article class="column" data-field="column">
         <header class="column-header">
+            <span class="column-drag-handle hidden" data-field="drag-handle" title="Перетащить колонку" aria-hidden="true">⠿</span>
             <button type="button" class="column-title" data-field="title-btn"></button>
-            <button type="button" class="btn-icon column-menu-btn hidden" data-field="menu-btn" aria-label="Настройки колонки">⋯</button>
+            <button type="button" class="btn-icon column-menu-btn hidden" data-field="menu-btn" aria-label="Настройки колонки" title="Настройки колонки">⚙</button>
         </header>
         <div class="cards-list" data-field="cards-list"></div>
         <button type="button" class="add-card-btn hidden" data-field="add-card-btn">+ Добавить карточку</button>

@@ -5,6 +5,7 @@ from database import get_db_context
 from models import User
 from .helpers import user_has_team_access
 from . import permissions as perm
+from .card_helpers import workflow_fields, is_in_progress
 
 
 def _card_context(conn, card_row):
@@ -22,6 +23,9 @@ def _card_context(conn, card_row):
         (card_row['id'],)
     ).fetchone()['cnt']
 
+    column_is_done = bool(card_row['column_is_done']) if 'column_is_done' in card_row.keys() else False
+    wf = workflow_fields(card_row['status'], column_is_done)
+
     return {
         'id': card_row['id'],
         'title': card_row['title'],
@@ -29,6 +33,7 @@ def _card_context(conn, card_row):
         'position': card_row['position'],
         'column_id': card_row['column_id'],
         'column_title': card_row['column_title'],
+        'column_is_done': column_is_done,
         'board_id': card_row['board_id'],
         'board_title': card_row['board_title'],
         'team_id': card_row['team_id'],
@@ -37,7 +42,9 @@ def _card_context(conn, card_row):
         'assignee': assignee,
         'created_by': card_row['created_by'],
         'priority': card_row['priority'],
-        'status': card_row['status'],
+        'status': wf['status'],
+        'workflow_status': wf['workflow_status'],
+        'is_completed': wf['is_completed'],
         'deadline': card_row['deadline'],
         'created_at': card_row['created_at'],
         'updated_at': card_row['updated_at'],
@@ -45,7 +52,9 @@ def _card_context(conn, card_row):
     }
 
 
-def _is_overdue(deadline_str):
+def _is_overdue(deadline_str, status, column_is_done):
+    if not is_in_progress(status, column_is_done):
+        return False
     if not deadline_str:
         return False
     try:
@@ -72,6 +81,7 @@ def get_user_tasks(user_id):
         rows = conn.execute(f'''
             SELECT c.*,
                    col.title AS column_title,
+                   col.is_done AS column_is_done,
                    col.board_id,
                    b.title AS board_title,
                    b.team_id,
@@ -106,9 +116,10 @@ def get_leader_dashboard(user_id):
         for team in leader_teams:
             team_id = team['id']
 
-            cards = conn.execute('''
+            rows = conn.execute('''
                 SELECT c.*,
                        col.title AS column_title,
+                       col.is_done AS column_is_done,
                        col.board_id,
                        b.title AS board_title,
                        b.team_id,
@@ -120,10 +131,10 @@ def get_leader_dashboard(user_id):
                 WHERE b.team_id = ?
             ''', (team_id,)).fetchall()
 
-            card_items = [_card_context(conn, row) for row in cards]
+            card_items = [_card_context(conn, row) for row in rows]
 
             by_priority = {'low': 0, 'medium': 0, 'high': 0, 'critical': 0}
-            by_status = {'active': 0, 'completed': 0, 'archived': 0}
+            by_workflow = {'active': 0, 'completed': 0, 'archived': 0}
             by_column = {}
             by_assignee = {}
             overdue = []
@@ -131,7 +142,8 @@ def get_leader_dashboard(user_id):
 
             for card in card_items:
                 by_priority[card['priority']] = by_priority.get(card['priority'], 0) + 1
-                by_status[card['status']] = by_status.get(card['status'], 0) + 1
+                ws = card['workflow_status']
+                by_workflow[ws] = by_workflow.get(ws, 0) + 1
 
                 col_key = card['column_title']
                 by_column[col_key] = by_column.get(col_key, 0) + 1
@@ -149,12 +161,12 @@ def get_leader_dashboard(user_id):
                             'active': 0,
                         }
                     by_assignee[aid]['total'] += 1
-                    if card['status'] == 'active':
+                    if ws == 'active':
                         by_assignee[aid]['active'] += 1
-                    if _is_overdue(card['deadline']) and card['status'] == 'active':
+                    if _is_overdue(card['deadline'], card['status'], card['column_is_done']):
                         by_assignee[aid]['overdue'] += 1
 
-                if _is_overdue(card['deadline']) and card['status'] == 'active':
+                if _is_overdue(card['deadline'], card['status'], card['column_is_done']):
                     overdue.append(card)
 
             members = conn.execute('''
@@ -177,14 +189,14 @@ def get_leader_dashboard(user_id):
                 },
                 'summary': {
                     'total': len(card_items),
-                    'active': by_status.get('active', 0),
-                    'completed': by_status.get('completed', 0),
-                    'archived': by_status.get('archived', 0),
+                    'active': by_workflow.get('active', 0),
+                    'completed': by_workflow.get('completed', 0),
+                    'archived': by_workflow.get('archived', 0),
                     'overdue': len(overdue),
                     'unassigned': len(unassigned),
                 },
                 'by_priority': by_priority,
-                'by_status': by_status,
+                'by_status': by_workflow,
                 'by_column': [
                     {'column': name, 'count': count}
                     for name, count in sorted(by_column.items())

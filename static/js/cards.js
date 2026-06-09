@@ -22,10 +22,14 @@ const Cards = {
         document.getElementById('card-title-input').value = card.title;
         document.getElementById('card-description-input').value = card.description || '';
         document.getElementById('card-priority-input').value = card.priority || 'medium';
-        document.getElementById('card-status-input').value = card.status || 'active';
         document.getElementById('card-deadline-input').value = card.deadline
             ? card.deadline.replace(' ', 'T').slice(0, 16)
             : '';
+
+        const archivedInput = document.getElementById('card-archived-input');
+        if (archivedInput) {
+            archivedInput.checked = card.status === 'archived';
+        }
 
         this.populateAssigneeSelect(card.assignee_id);
 
@@ -40,7 +44,7 @@ const Cards = {
         );
 
         document.querySelectorAll('#card-form .leader-only').forEach(el => {
-            el.classList.toggle('hidden', !Permissions.canAssign(role));
+            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
         });
     },
 
@@ -93,14 +97,14 @@ const Cards = {
             title: document.getElementById('card-title-input').value,
             description: document.getElementById('card-description-input').value,
             priority: document.getElementById('card-priority-input').value,
-            status: document.getElementById('card-status-input').value,
             deadline: document.getElementById('card-deadline-input').value || null,
             user_id: currentUser.id
         };
 
-        if (Permissions.canAssign(role)) {
+        if (Permissions.canManageBoard(role)) {
             const assigneeSelect = document.getElementById('card-assignee-input');
             data.assignee_id = assigneeSelect?.value ? parseInt(assigneeSelect.value) : null;
+            data.archived = document.getElementById('card-archived-input')?.checked || false;
         }
 
         try {

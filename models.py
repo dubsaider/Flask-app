@@ -69,6 +69,7 @@ class Column:
         self.title = row['title']
         self.position = row['position']
         self.board_id = row['board_id']
+        self.is_done = bool(row['is_done']) if 'is_done' in row.keys() else False
         self.created_at = row['created_at']
         self.cards = []
     
@@ -78,8 +79,9 @@ class Column:
             'title': self.title,
             'position': self.position,
             'board_id': self.board_id,
+            'is_done': self.is_done,
             'created_at': self.created_at,
-            'cards': [c.to_dict() for c in self.cards]
+            'cards': [c.to_dict(column_is_done=self.is_done) for c in self.cards]
         }
 
 class Card:
@@ -101,7 +103,9 @@ class Card:
         self.creator = None
         self.comments = []
     
-    def to_dict(self):
+    def to_dict(self, column_is_done=False):
+        from api.card_helpers import workflow_fields
+        wf = workflow_fields(self.status, column_is_done)
         result = {
             'id': self.id,
             'title': self.title,
@@ -111,7 +115,9 @@ class Card:
             'assignee_id': self.assignee_id,
             'created_by': self.created_by,
             'priority': self.priority,
-            'status': self.status,
+            'status': wf['status'],
+            'workflow_status': wf['workflow_status'],
+            'is_completed': wf['is_completed'],
             'deadline': self.deadline,
             'created_at': self.created_at,
             'updated_at': self.updated_at,

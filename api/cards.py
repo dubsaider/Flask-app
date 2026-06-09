@@ -72,17 +72,33 @@ def card_handler(card_id):
 
             assignee_id = data['assignee_id'] if 'assignee_id' in data else existing['assignee_id']
 
+            new_status = existing['status']
+            if 'archived' in data:
+                if not perm.can_manage_board(role):
+                    return _forbidden('Only team leader can archive tasks')
+                new_status = 'archived' if data['archived'] else 'active'
+            elif 'status' in data:
+                if data['status'] not in ('active', 'archived'):
+                    return jsonify({'error': 'Invalid status'}), 400
+                if data['status'] == 'archived' and not perm.can_manage_board(role):
+                    return _forbidden('Only team leader can archive tasks')
+                new_status = data['status']
+
             conn.execute(
                 '''UPDATE cards
                    SET title = ?, description = ?, assignee_id = ?, priority = ?,
                        status = ?, deadline = ?, updated_at = ?
                    WHERE id = ?''',
                 (data['title'], data.get('description', ''), assignee_id,
-                 data.get('priority', 'medium'), data.get('status', 'active'),
+                 data.get('priority', 'medium'), new_status,
                  data.get('deadline'), datetime.now(), card_id)
             )
             card = conn.execute('SELECT * FROM cards WHERE id = ?', (card_id,)).fetchone()
-            return jsonify(Card(card).to_dict())
+            column = conn.execute(
+                'SELECT is_done FROM columns WHERE id = ?',
+                (card['column_id'],)
+            ).fetchone()
+            return jsonify(Card(card).to_dict(column_is_done=bool(column['is_done'])))
 
         elif request.method == 'DELETE':
             data = request.json or {}
@@ -127,7 +143,13 @@ def card_handler(card_id):
                     comment.author = User(author)
                 card_obj.comments.append(comment)
 
-            return jsonify(card_obj.to_dict())
+            column = conn.execute(
+                'SELECT is_done FROM columns WHERE id = ?',
+                (card_obj.column_id,)
+            ).fetchone()
+            column_is_done = bool(column['is_done']) if column else False
+
+            return jsonify(card_obj.to_dict(column_is_done=column_is_done))
         return jsonify({'error': 'Card not found'}), 404
 
 
@@ -153,6 +175,21 @@ def move_card(card_id):
 
         if not perm.can_move_card(role, card, user_id):
             return _forbidden('You cannot move this card')
+
+        new_column = conn.execute(
+            'SELECT board_id FROM columns WHERE id = ?',
+            (new_column_id,)
+        ).fetchone()
+        if not new_column:
+            return jsonify({'error': 'Target column not found'}), 404
+
+        card_board = conn.execute('''
+            SELECT b.id FROM boards b
+            JOIN columns col ON col.board_id = b.id
+            WHERE col.id = ?
+        ''', (card['column_id'],)).fetchone()
+        if not card_board or new_column['board_id'] != card_board['id']:
+            return _forbidden('Cannot move card to another board')
 
         old_column_id = card['column_id']
         old_position = card['position']

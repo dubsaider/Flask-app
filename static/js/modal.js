@@ -34,8 +34,9 @@ const Modals = {
         document.getElementById('card-title-input').value = '';
         document.getElementById('card-description-input').value = '';
         document.getElementById('card-priority-input').value = 'medium';
-        document.getElementById('card-status-input').value = 'active';
         document.getElementById('card-deadline-input').value = '';
+        const archivedInput = document.getElementById('card-archived-input');
+        if (archivedInput) archivedInput.checked = false;
         DOM.show(document.getElementById('card-form'));
         DOM.hide(document.getElementById('card-view-only'));
         document.getElementById('comments-list')?.replaceChildren();
@@ -43,7 +44,7 @@ const Modals = {
         document.querySelector('#card-form .card-edit-actions')?.classList.remove('hidden');
         document.getElementById('card-delete-btn')?.classList.add('hidden');
         document.querySelectorAll('#card-form .leader-only').forEach(el => {
-            el.classList.toggle('hidden', !Permissions.canAssign(role));
+            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
         });
 
         Cards.populateAssigneeSelect(null);
@@ -62,10 +63,12 @@ const Modals = {
         document.getElementById('board-modal')?.classList.remove('active');
     },
 
-    openColumn(columnId, currentTitle) {
+    openColumn(columnId, currentTitle, isDone = false) {
         document.getElementById('column-id').value = columnId;
         document.getElementById('column-title-input').value = currentTitle;
         document.getElementById('column-modal-title').textContent = currentTitle;
+        const isDoneInput = document.getElementById('column-is-done-input');
+        if (isDoneInput) isDoneInput.checked = !!isDone;
         document.getElementById('column-modal')?.classList.add('active');
     },
 

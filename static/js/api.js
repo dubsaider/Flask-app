@@ -49,6 +49,7 @@ const API = {
     getColumns: (boardId) => API.get(`/api/boards/${boardId}/columns`),
 
     createColumn: (boardId, data) => API.post(`/api/boards/${boardId}/columns`, data),
+    reorderColumns: (boardId, data) => API.put(`/api/boards/${boardId}/columns/reorder`, data),
     updateColumn: (id, data) => API.put(`/api/columns/${id}`, data),
     deleteColumn: (id, data) => API.delete(`/api/columns/${id}`, data),
 

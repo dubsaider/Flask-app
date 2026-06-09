@@ -1,19 +1,34 @@
 <section id="board-workspace" class="board-workspace">
-    <header class="board-header">
-        <div class="board-header-info">
+    <header class="board-toolbar">
+        <div class="board-toolbar__info">
             <h1 class="board-title" id="board-title">Загрузка...</h1>
-            <p class="board-description" id="board-description"></p>
-            <div class="board-role-badge hidden" id="role-info"></div>
-            <p class="board-role-desc hidden" id="role-description"></p>
+            <p class="board-description hidden" id="board-description"></p>
         </div>
 
-        <div class="board-actions leader-only hidden">
-            <button type="button" class="btn btn-secondary" id="edit-board-btn">Редактировать</button>
-            <button type="button" class="btn btn-danger" id="delete-board-btn">Удалить</button>
+        <div class="board-toolbar__tools">
+            <button
+                type="button"
+                class="board-filter-toggle"
+                id="filter-toggle"
+                aria-expanded="false"
+                aria-controls="board-filters-panel"
+            >
+                <span class="board-filter-toggle__icon" aria-hidden="true">⌕</span>
+                <span class="board-filter-toggle__label">Фильтры</span>
+                <span class="filter-result-count" id="filter-result-count"></span>
+            </button>
+
+            <div class="board-actions leader-only hidden">
+                <button type="button" class="btn btn-secondary btn-sm" id="add-column-toolbar-btn">+ Колонка</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="edit-board-btn">Изменить</button>
+                <button type="button" class="btn btn-danger btn-sm" id="delete-board-btn">Удалить</button>
+            </div>
         </div>
     </header>
 
-    {% include 'components/task_filters.html' %}
+    <div class="board-filters-panel hidden" id="board-filters-panel">
+        {% include 'components/task_filters.html' %}
+    </div>
 
     <div id="board-state" class="board-state hidden">
         <div class="state-icon" id="board-state-icon" aria-hidden="true"></div>
