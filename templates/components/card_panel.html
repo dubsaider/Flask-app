@@ -1,0 +1,96 @@
+<aside id="card-panel" class="card-panel" aria-hidden="true" aria-label="Карточка">
+    <div class="card-panel__inner">
+        <header class="card-panel__header">
+            <div class="card-panel__toolbar">
+                <div class="card-panel__chips" id="card-panel-chips"></div>
+                <button type="button" class="card-panel__close" id="card-panel-close" aria-label="Закрыть">
+                    <span aria-hidden="true">✕</span>
+                </button>
+            </div>
+
+            <h2 class="card-panel__title card-panel__title--view" id="card-panel-title"></h2>
+            <input
+                type="text"
+                id="card-title-input"
+                class="card-panel__title card-panel__title--edit hidden"
+                required
+                placeholder="Название задачи"
+            >
+
+            <div class="card-panel__meta" id="card-panel-meta"></div>
+        </header>
+
+        <div class="card-panel__body">
+            <div id="card-readonly-hint" class="card-panel__hint hidden" role="status">
+                <span class="card-panel__hint-icon" aria-hidden="true">ℹ</span>
+                <p class="card-panel__hint-text">
+                    Описание и параметры задачи редактирует только <strong>руководитель</strong>.
+                    Вы можете перемещать свои задачи на доске и оставлять комментарии.
+                </p>
+            </div>
+
+            <form id="card-form" class="card-form">
+                <input type="hidden" id="card-id">
+                <input type="hidden" id="card-column-id">
+
+                <section class="card-panel__section">
+                    <h3 class="card-panel__section-title">Параметры</h3>
+                    <div class="card-panel__fields">
+                        <div class="form-group leader-only hidden">
+                            <label class="form-label" for="card-assignee-input">Исполнитель</label>
+                            <select id="card-assignee-input" class="form-control">
+                                <option value="">Не назначен</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="card-priority-input">Приоритет</label>
+                            <select id="card-priority-input" class="form-control form-control--priority">
+                                <option value="low">Низкий</option>
+                                <option value="medium" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                                <option value="critical">Критический</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="card-deadline-input">Дедлайн</label>
+                            <input type="datetime-local" id="card-deadline-input" class="form-control">
+                        </div>
+
+                        <div class="form-group leader-only hidden">
+                            <label class="form-label" for="card-archived-input">Архив</label>
+                            <label class="filter-check card-panel__archive-check">
+                                <input type="checkbox" id="card-archived-input">
+                                <span>В архиве</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card-panel__section">
+                    <h3 class="card-panel__section-title">Описание</h3>
+                    <input type="hidden" id="card-description-input">
+                    <div id="card-description-editor" class="rich-text-editor rich-text-editor--card"></div>
+                </section>
+
+                <footer class="form-actions form-actions--split card-edit-actions hidden card-panel__footer">
+                    <button type="button" class="btn btn-danger leader-only hidden" id="card-delete-btn">Удалить</button>
+                    <div class="form-actions__right">
+                        <button type="button" class="btn btn-secondary" id="card-cancel-btn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </footer>
+            </form>
+
+            <div id="card-view-only" class="card-view-only hidden">
+                <section class="card-panel__section">
+                    <h3 class="card-panel__section-title">Описание</h3>
+                    <div id="view-description" class="card-panel__description rich-text-content"></div>
+                </section>
+            </div>
+
+            {% include 'components/comment_section.html' %}
+        </div>
+    </div>
+</aside>

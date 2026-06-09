@@ -3,7 +3,7 @@
  *
  * Куратор      — просмотр + комментарии
  * Руководитель — полное управление командой и доской
- * Разработчик  — редактирование и перемещение только своих задач
+ * Разработчик  — перемещение своих задач и комментарии
  */
 const Permissions = {
     getRole(team) {
@@ -22,10 +22,8 @@ const Permissions = {
         return role === 'leader';
     },
 
-    canEditCard(role, card, userId) {
-        if (role === 'leader') return true;
-        if (role === 'developer') return card?.assignee_id === userId;
-        return false;
+    canEditCard(role) {
+        return role === 'leader';
     },
 
     canDeleteCard(role) {
@@ -50,10 +48,8 @@ const Permissions = {
         return role === 'leader';
     },
 
-    isReadOnlyCard(role, card, userId) {
-        if (role === 'curator') return true;
-        if (role === 'developer') return !this.canEditCard(role, card, userId);
-        return false;
+    isReadOnlyCard(role) {
+        return role !== 'leader';
     },
 
     getRoleLabel(role) {

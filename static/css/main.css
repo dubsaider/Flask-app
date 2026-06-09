@@ -2,8 +2,10 @@
 @import url('layout.css');
 @import url('filters.css');
 @import url('board.css');
+@import url('card-panel.css');
 @import url('cards.css');
 @import url('modals.css');
 @import url('pages.css');
 @import url('notifications.css');
+@import url('rich-text.css');
 @import url('login.css');

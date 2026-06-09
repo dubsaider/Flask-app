@@ -30,6 +30,8 @@ const DOM = {
         if (!node) return;
         if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') {
             node.value = value;
+        } else if (node.classList.contains('rich-text-content') && value && String(value).includes('<')) {
+            node.innerHTML = value;
         } else {
             node.textContent = value;
         }

@@ -7,7 +7,8 @@
     <div id="comments-list" class="comments-list"></div>
 
     <div class="comment-form">
-        <textarea id="comment-text" class="form-control form-control--textarea" placeholder="Написать комментарий..." rows="3"></textarea>
+        <input type="hidden" id="comment-text-input">
+        <div id="comment-editor" class="rich-text-editor rich-text-editor--comment"></div>
         <button type="button" class="btn btn-primary comment-submit-btn" id="comment-submit-btn">Отправить</button>
     </div>
 </section>

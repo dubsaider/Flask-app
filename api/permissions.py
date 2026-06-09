@@ -2,7 +2,7 @@
 
 Куратор   — наблюдатель (teams.curator_id): просмотр + комментарии
 Руководитель — team_members.role = leader: полное управление
-Разработчик  — team_members.role = developer: работа только со своими задачами
+Разработчик  — team_members.role = developer: перемещение своих задач и комментарии
 """
 
 
@@ -82,11 +82,7 @@ def can_create_card(role):
 
 
 def can_edit_card(role, card, user_id):
-    if role == 'leader':
-        return True
-    if role == 'developer':
-        return card['assignee_id'] == user_id
-    return False
+    return role == 'leader'
 
 
 def can_delete_card(role):

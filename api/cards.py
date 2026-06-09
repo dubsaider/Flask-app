@@ -4,6 +4,7 @@ from .init import api_bp
 from database import get_db_context
 from models import Card, User, Comment
 from . import permissions as perm
+from utils.html_sanitize import sanitize_html
 from .notify_helpers import notify_assignee, notify_comment
 
 
@@ -39,7 +40,7 @@ def create_card():
         cursor = conn.execute(
             '''INSERT INTO cards (title, description, position, column_id, assignee_id, created_by, priority, deadline)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-            (data['title'], data.get('description', ''), max_pos + 1, data['column_id'],
+            (data['title'], sanitize_html(data.get('description', '')), max_pos + 1, data['column_id'],
              data.get('assignee_id'), user_id, data.get('priority', 'medium'),
              data.get('deadline'))
         )
@@ -93,7 +94,7 @@ def card_handler(card_id):
                    SET title = ?, description = ?, assignee_id = ?, priority = ?,
                        status = ?, deadline = ?, updated_at = ?
                    WHERE id = ?''',
-                (data['title'], data.get('description', ''), assignee_id,
+                (data['title'], sanitize_html(data.get('description', '')), assignee_id,
                  data.get('priority', 'medium'), new_status,
                  data.get('deadline'), datetime.now(), card_id)
             )

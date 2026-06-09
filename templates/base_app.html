@@ -5,29 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Kanban Board{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="app-body">
     <div class="app-shell">
         {% include 'components/sidebar.html' %}
 
-        <div class="app-main">
-            {% block content %}{% endblock %}
+        <div class="app-main" id="app-main">
+            <div class="app-main__view">
+                {% block content %}{% endblock %}
+            </div>
+            {% include 'components/card_panel.html' %}
         </div>
     </div>
 
-    {% include 'components/card_modal.html' %}
     {% include 'components/board_modal.html' %}
     {% include 'components/column_modal.html' %}
     {% include 'components/html_templates.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <script src="{{ url_for('static', filename='js/dom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
     <script src="{{ url_for('static', filename='js/permissions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/richText.js') }}"></script>
     <script src="{{ url_for('static', filename='js/cards.js') }}"></script>
     <script src="{{ url_for('static', filename='js/columns.js') }}"></script>
     <script src="{{ url_for('static', filename='js/comments.js') }}"></script>

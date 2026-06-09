@@ -356,11 +356,19 @@
 .comment-form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.65rem;
+}
+
+.comment-form .rich-text-editor {
+    width: 100%;
 }
 
 .comment-submit-btn {
     align-self: flex-end;
+}
+
+.comment-text {
+    margin: 0;
 }
 
 /* Buttons */

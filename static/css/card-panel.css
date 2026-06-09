@@ -1,0 +1,372 @@
+.card-panel {
+    width: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--color-bg);
+    border-left: 1px solid transparent;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.28s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-panel.active {
+    width: min(520px, 46vw);
+    border-left-color: var(--color-border);
+    box-shadow: -12px 0 40px rgba(9, 30, 66, 0.08);
+}
+
+.card-panel__inner {
+    width: min(520px, 46vw);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--color-surface);
+}
+
+.card-panel__header {
+    padding: 1.1rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background: linear-gradient(165deg, #f0f6ff 0%, #fafbfc 45%, var(--color-surface) 100%);
+    flex-shrink: 0;
+}
+
+.card-panel__toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+
+.card-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.card-panel__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(9, 30, 66, 0.06);
+}
+
+.card-panel__chip--priority-low { background: #e3fcef; color: #216e4e; }
+.card-panel__chip--priority-medium { background: #fff7d6; color: #974f0c; }
+.card-panel__chip--priority-high { background: #ffebe6; color: #bf2600; }
+.card-panel__chip--priority-critical { background: #ffbdad; color: #5d1f1a; }
+
+.card-panel__chip--workflow-active { background: #deebff; color: #0052cc; }
+.card-panel__chip--workflow-completed { background: #e3fcef; color: #216e4e; }
+.card-panel__chip--workflow-archived { background: #ebecf0; color: #5e6c84; }
+
+.card-panel__close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(9, 30, 66, 0.08);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.card-panel__close:hover {
+    background: #ffebe6;
+    border-color: rgba(235, 90, 70, 0.25);
+    color: var(--color-danger);
+    transform: scale(1.04);
+}
+
+.card-panel__title {
+    width: 100%;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.card-panel__title--edit {
+    padding: 0.55rem 0.7rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.7);
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.card-panel__title--edit:hover {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+.card-panel__title--edit:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 3px rgba(2, 106, 167, 0.14);
+}
+
+.card-panel__title--view {
+    word-break: break-word;
+}
+
+.card-panel__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.card-panel__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.65rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(223, 225, 230, 0.9);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+}
+
+.card-panel__meta-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.card-panel__meta-value {
+    font-weight: 600;
+}
+
+.card-panel__body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 1.25rem 1.25rem;
+    min-height: 0;
+    scrollbar-gutter: stable;
+}
+
+.card-panel__hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #e9f2ff 0%, #f0f6ff 100%);
+    border: 1px solid #b3d4ff;
+    border-left: 4px solid var(--color-primary);
+    color: #0747a6;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.card-panel__hint-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.05rem;
+}
+
+.card-panel__hint-text {
+    margin: 0;
+}
+
+.card-panel__hint-text strong {
+    font-weight: 700;
+}
+
+.card-panel__section {
+    margin-top: 1.25rem;
+}
+
+.card-panel__section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.65rem;
+}
+
+.card-panel__section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-border), transparent);
+}
+
+.card-panel__fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem 0.9rem;
+    padding: 0.85rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.card-panel__fields .form-group {
+    margin: 0;
+}
+
+.card-panel__fields .form-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.card-panel__fields .form-control {
+    font-size: 0.88rem;
+}
+
+.card-panel__archive-check {
+    margin-top: 0.15rem;
+}
+
+.card-panel__description {
+    padding: 1rem 1.1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    min-height: 5rem;
+    box-shadow: inset 0 1px 2px rgba(9, 30, 66, 0.03);
+}
+
+.card-panel__description:empty::before {
+    content: 'Описание не задано';
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.card-panel__footer {
+    position: sticky;
+    bottom: 0;
+    margin: 1.15rem -1.25rem -1.25rem;
+    padding: 0.9rem 1.25rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, var(--color-surface) 35%);
+    border-top: 1px solid var(--color-border);
+    backdrop-filter: blur(8px);
+    z-index: 2;
+}
+
+.card-panel .comments-section {
+    margin-top: 1.75rem;
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.card-panel .comments-section__header {
+    margin-bottom: 0.85rem;
+}
+
+.card-panel .comments-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.card-panel .comments-list {
+    max-height: none;
+}
+
+.card-panel .comment-item__body {
+    background: var(--color-surface);
+    box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
+}
+
+.card-panel .comment-form {
+    padding: 0.75rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.card-panel .comment-submit-btn {
+    margin-top: 0.65rem;
+    width: 100%;
+}
+
+.card-panel .rich-text-editor {
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 1px 2px rgba(9, 30, 66, 0.04);
+}
+
+.card-panel .rich-text-editor--card .ql-editor {
+    min-height: 180px;
+    max-height: none;
+}
+
+.card-panel .rich-text-editor--comment .ql-editor {
+    min-height: 72px;
+    max-height: 180px;
+}
+
+.card-panel--readonly .card-panel__header {
+    background: linear-gradient(165deg, #fafbfc 0%, var(--color-surface) 100%);
+}
+
+.card-panel--readonly .card-panel__section:first-of-type {
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 900px) {
+    .card-panel.active,
+    .card-panel__inner {
+        width: min(440px, 100vw);
+    }
+
+    .card-panel__fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .card-panel.active {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        z-index: 500;
+    }
+
+    .card-panel__inner {
+        width: 100%;
+    }
+}

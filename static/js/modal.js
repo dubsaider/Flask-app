@@ -1,7 +1,7 @@
 const Modals = {
     openCard(cardId = null, columnId = null) {
-        const modal = document.getElementById('card-modal');
-        if (!modal) return;
+        const panel = document.getElementById('card-panel');
+        if (!panel) return;
 
         const role = Permissions.getRole(window.currentTeam);
 
@@ -15,24 +15,37 @@ const Modals = {
             this.prepareNewCard(columnId, role);
         }
 
-        const commentForm = document.querySelector('#card-modal .comment-form');
+        RichText.clearComment();
+
+        const commentForm = document.querySelector('#card-panel .comment-form');
         if (commentForm) {
             commentForm.classList.toggle('hidden', !Permissions.canComment(role));
         }
 
-        modal.classList.add('active');
+        panel.classList.add('active');
+        panel.setAttribute('aria-hidden', 'false');
+        panel.querySelector('.card-panel__body')?.scrollTo(0, 0);
     },
 
     closeCard() {
-        document.getElementById('card-modal')?.classList.remove('active');
+        const panel = document.getElementById('card-panel');
+        panel?.classList.remove('active');
+        panel?.setAttribute('aria-hidden', 'true');
     },
 
     prepareNewCard(columnId, role) {
-        document.getElementById('card-modal-title').textContent = 'Новая карточка';
+        document.getElementById('card-panel-title').textContent = 'Новая карточка';
+        document.getElementById('card-panel-title')?.classList.add('hidden');
+        const titleInput = document.getElementById('card-title-input');
+        titleInput?.classList.remove('hidden');
+        titleInput.value = '';
         document.getElementById('card-id').value = '';
         document.getElementById('card-column-id').value = columnId;
         document.getElementById('card-title-input').value = '';
-        document.getElementById('card-description-input').value = '';
+        document.getElementById('card-readonly-hint')?.classList.add('hidden');
+        document.getElementById('card-panel')?.classList.remove('card-panel--readonly');
+        document.getElementById('card-panel-meta')?.replaceChildren();
+        document.getElementById('card-panel-chips')?.replaceChildren();
         document.getElementById('card-priority-input').value = 'medium';
         document.getElementById('card-deadline-input').value = '';
         const archivedInput = document.getElementById('card-archived-input');
@@ -48,6 +61,8 @@ const Modals = {
         });
 
         Cards.populateAssigneeSelect(null);
+        RichText.clearCard();
+        titleInput?.focus();
     },
 
     openBoard() {
@@ -78,7 +93,7 @@ const Modals = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('card-modal-close')?.addEventListener('click', () => Modals.closeCard());
+    document.getElementById('card-panel-close')?.addEventListener('click', () => Modals.closeCard());
     document.getElementById('card-cancel-btn')?.addEventListener('click', () => Modals.closeCard());
 
     document.getElementById('board-modal-close')?.addEventListener('click', () => Modals.closeBoard());
@@ -87,6 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('column-modal-close')?.addEventListener('click', () => Modals.closeColumn());
     document.getElementById('column-cancel-btn')?.addEventListener('click', () => Modals.closeColumn());
     document.getElementById('column-delete-btn')?.addEventListener('click', () => Columns.deleteColumn());
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && document.getElementById('card-panel')?.classList.contains('active')) {
+            Modals.closeCard();
+        }
+    });
 
     document.addEventListener('click', (event) => {
         if (event.target.classList.contains('modal')) {

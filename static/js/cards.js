@@ -1,26 +1,41 @@
 const Cards = {
-    showReadOnlyView(card) {
+    showReadOnlyView(card, role) {
+        const panel = document.getElementById('card-panel');
+        panel?.classList.add('card-panel--readonly');
+
         DOM.hide(document.getElementById('card-form'));
         DOM.show(document.getElementById('card-view-only'));
 
-        document.getElementById('view-title').textContent = card.title;
-        document.getElementById('view-description').textContent = card.description || '—';
+        document.getElementById('card-panel-title').textContent = card.title;
+        document.getElementById('card-title-input')?.classList.add('hidden');
+        document.getElementById('card-panel-title')?.classList.remove('hidden');
 
-        const priorityEl = document.getElementById('view-priority');
-        const priority = card.priority || 'medium';
-        priorityEl.textContent = PRIORITY_LABELS[priority] || priority;
-        priorityEl.className = `view-priority-badge view-priority-badge--${priority}`;
+        RichText.renderHtml(document.getElementById('view-description'), card.description);
+        this.renderHeaderMeta(card);
+        this.renderMetaRow(card);
+
+        const hint = document.getElementById('card-readonly-hint');
+        if (hint) {
+            hint.classList.toggle('hidden', role !== 'developer');
+        }
     },
 
     showEditForm(card, role) {
+        const panel = document.getElementById('card-panel');
+        panel?.classList.remove('card-panel--readonly');
+
         DOM.show(document.getElementById('card-form'));
         DOM.hide(document.getElementById('card-view-only'));
+        document.getElementById('card-readonly-hint')?.classList.add('hidden');
 
-        document.getElementById('card-modal-title').textContent = card.title;
+        document.getElementById('card-panel-title')?.classList.add('hidden');
+        const titleInput = document.getElementById('card-title-input');
+        titleInput?.classList.remove('hidden');
+        titleInput.value = card.title;
+
         document.getElementById('card-id').value = card.id;
         document.getElementById('card-column-id').value = card.column_id;
-        document.getElementById('card-title-input').value = card.title;
-        document.getElementById('card-description-input').value = card.description || '';
+        RichText.setCardContent(card.description || '');
         document.getElementById('card-priority-input').value = card.priority || 'medium';
         document.getElementById('card-deadline-input').value = card.deadline
             ? card.deadline.replace(' ', 'T').slice(0, 16)
@@ -32,11 +47,10 @@ const Cards = {
         }
 
         this.populateAssigneeSelect(card.assignee_id);
+        this.renderHeaderMeta(card);
 
         const editActions = document.querySelector('#card-form .card-edit-actions');
-        if (editActions) {
-            editActions.classList.toggle('hidden', false);
-        }
+        editActions?.classList.remove('hidden');
 
         document.getElementById('card-delete-btn')?.classList.toggle(
             'hidden',
@@ -46,16 +60,64 @@ const Cards = {
         document.querySelectorAll('#card-form .leader-only').forEach(el => {
             el.classList.toggle('hidden', !Permissions.canManageBoard(role));
         });
+
+        document.getElementById('card-panel-meta').replaceChildren();
+    },
+
+    renderHeaderMeta(card) {
+        const chips = document.getElementById('card-panel-chips');
+        if (!chips) return;
+
+        DOM.clear(chips);
+
+        const priority = card.priority || 'medium';
+        const priorityChip = document.createElement('span');
+        priorityChip.className = `card-panel__chip card-panel__chip--priority-${priority}`;
+        priorityChip.textContent = PRIORITY_LABELS[priority] || priority;
+        chips.appendChild(priorityChip);
+
+        const workflow = TaskWorkflow.status(card);
+        const workflowChip = document.createElement('span');
+        workflowChip.className = `card-panel__chip card-panel__chip--workflow-${workflow}`;
+        workflowChip.textContent = TaskWorkflow.label(card);
+        chips.appendChild(workflowChip);
+    },
+
+    renderMetaRow(card) {
+        const meta = document.getElementById('card-panel-meta');
+        if (!meta) return;
+
+        DOM.clear(meta);
+
+        const assigneeName = card.assignee?.username || 'Не назначен';
+        meta.appendChild(this.makeMetaItem('Исполнитель', assigneeName));
+
+        const deadlineText = card.deadline
+            ? new Date(card.deadline.replace(' ', 'T')).toLocaleString('ru-RU', {
+                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+            })
+            : 'Не задан';
+        meta.appendChild(this.makeMetaItem('Дедлайн', deadlineText));
+    },
+
+    makeMetaItem(label, value) {
+        const item = document.createElement('div');
+        item.className = 'card-panel__meta-item';
+        item.innerHTML = `
+            <span class="card-panel__meta-label">${label}</span>
+            <span class="card-panel__meta-value">${value}</span>
+        `;
+        return item;
     },
 
     async loadCardForEdit(cardId) {
         const card = await API.getCard(cardId);
         const role = Permissions.getRole(window.currentTeam);
-        const userId = Auth.getCurrentUser().id;
 
-        if (Permissions.isReadOnlyCard(role, card, userId)) {
-            document.getElementById('card-modal-title').textContent = card.title;
-            this.showReadOnlyView(card);
+        document.getElementById('card-panel-title').textContent = card.title;
+
+        if (Permissions.isReadOnlyCard(role)) {
+            this.showReadOnlyView(card, role);
         } else {
             this.showEditForm(card, role);
         }
@@ -95,7 +157,7 @@ const Cards = {
 
         const data = {
             title: document.getElementById('card-title-input').value,
-            description: document.getElementById('card-description-input').value,
+            description: RichText.getCardContent(),
             priority: document.getElementById('card-priority-input').value,
             deadline: document.getElementById('card-deadline-input').value || null,
             user_id: currentUser.id

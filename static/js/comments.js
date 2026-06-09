@@ -25,9 +25,7 @@ const Comments = {
     },
 
     async addComment() {
-        const textarea = document.getElementById('comment-text');
-        const text = textarea.value.trim();
-
+        const text = RichText.getCommentContent().trim();
         if (!text || !this.currentCardId) return;
 
         try {
@@ -36,7 +34,7 @@ const Comments = {
                 user_id: Auth.getCurrentUser().id
             });
 
-            textarea.value = '';
+            RichText.clearComment();
             this.loadComments(this.currentCardId);
             Notifications.refresh();
         } catch (error) {

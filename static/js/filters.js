@@ -18,7 +18,8 @@ const TaskFilters = {
 
     matches(card, filters, userId) {
         if (filters.search) {
-            const text = `${card.title} ${card.description || ''}`.toLowerCase();
+            const descText = RichText.stripHtml(card.description || '');
+            const text = `${card.title} ${descText}`.toLowerCase();
             if (!text.includes(filters.search)) return false;
         }
         if (filters.priority && card.priority !== filters.priority) return false;
