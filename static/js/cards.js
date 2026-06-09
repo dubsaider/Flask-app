@@ -1,5 +1,5 @@
 const Cards = {
-    showReadOnlyView(card, role) {
+    showReadOnlyView(card, ctx) {
         const panel = document.getElementById('card-panel');
         panel?.classList.add('card-panel--readonly');
 
@@ -16,11 +16,11 @@ const Cards = {
 
         const hint = document.getElementById('card-readonly-hint');
         if (hint) {
-            hint.classList.toggle('hidden', role !== 'developer');
+            hint.classList.toggle('hidden', Permissions.canEditCard() || !Permissions.canMoveOwnCard());
         }
     },
 
-    showEditForm(card, role) {
+    showEditForm(card) {
         const panel = document.getElementById('card-panel');
         panel?.classList.remove('card-panel--readonly');
 
@@ -54,11 +54,19 @@ const Cards = {
 
         document.getElementById('card-delete-btn')?.classList.toggle(
             'hidden',
-            !Permissions.canDeleteCard(role)
+            !Permissions.canDeleteCard()
         );
 
         document.querySelectorAll('#card-form .leader-only').forEach(el => {
-            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
+            const assigneeField = el.querySelector('#card-assignee-input');
+            const archiveField = el.querySelector('#card-archived-input');
+            if (assigneeField) {
+                el.classList.toggle('hidden', !Permissions.canAssign());
+            } else if (archiveField) {
+                el.classList.toggle('hidden', !Permissions.canArchive());
+            } else {
+                el.classList.toggle('hidden', !Permissions.canManageBoard());
+            }
         });
 
         document.getElementById('card-panel-meta').replaceChildren();
@@ -112,14 +120,14 @@ const Cards = {
 
     async loadCardForEdit(cardId) {
         const card = await API.getCard(cardId);
-        const role = Permissions.getRole(window.currentTeam);
+        const ctx = Auth.getUserContext(window.currentTeam);
 
         document.getElementById('card-panel-title').textContent = card.title;
 
-        if (Permissions.isReadOnlyCard(role)) {
-            this.showReadOnlyView(card, role);
+        if (Permissions.isReadOnlyCard()) {
+            this.showReadOnlyView(card, ctx);
         } else {
-            this.showEditForm(card, role);
+            this.showEditForm(card);
         }
 
         Comments.loadComments(cardId);
@@ -152,7 +160,6 @@ const Cards = {
 
         const cardId = document.getElementById('card-id').value;
         const columnId = parseInt(document.getElementById('card-column-id').value);
-        const role = Permissions.getRole(window.currentTeam);
         const currentUser = Auth.getCurrentUser();
 
         const data = {
@@ -163,9 +170,11 @@ const Cards = {
             user_id: currentUser.id
         };
 
-        if (Permissions.canManageBoard(role)) {
+        if (Permissions.canAssign()) {
             const assigneeSelect = document.getElementById('card-assignee-input');
             data.assignee_id = assigneeSelect?.value ? parseInt(assigneeSelect.value) : null;
+        }
+        if (Permissions.canArchive()) {
             data.archived = document.getElementById('card-archived-input')?.checked || false;
         }
 
@@ -173,8 +182,8 @@ const Cards = {
             if (cardId) {
                 await API.updateCard(parseInt(cardId), data);
             } else {
-                if (!Permissions.canCreateCard(role)) {
-                    alert('Только руководитель может создавать задачи');
+                if (!Permissions.canCreateCard()) {
+                    alert('У вас нет прав на создание задач');
                     return;
                 }
                 data.column_id = columnId;

@@ -1,62 +1,115 @@
 /**
- * Ролевая модель (зеркало api/permissions.py)
- *
- * Куратор      — просмотр + комментарии
- * Руководитель — полное управление командой и доской
- * Разработчик  — перемещение своих задач и комментарии
+ * Права доступа на основе объекта permissions из API.
+ * Контекст задаётся через setContext() после загрузки команды.
  */
 const Permissions = {
+    _permissions: {},
+    _roleSlug: 'none',
+    _roleName: '',
+
+    setContext(permissions, roleSlug, roleName) {
+        this._permissions = permissions || {};
+        this._roleSlug = roleSlug || 'none';
+        this._roleName = roleName || '';
+    },
+
+    getRoleSlug() {
+        return this._roleSlug;
+    },
+
+    getRoleName() {
+        return this._roleName;
+    },
+
     getRole(team) {
-        return Auth.getUserRole(team);
+        return Auth.getUserContext(team).slug;
     },
 
-    canViewBoard(role) {
-        return ['curator', 'leader', 'developer'].includes(role);
+    has(key) {
+        return !!this._permissions[key];
     },
 
-    canComment(role) {
-        return this.canViewBoard(role);
+    canViewBoard() {
+        return this.has('view_board');
     },
 
-    canCreateCard(role) {
-        return role === 'leader';
+    canComment() {
+        return this.has('comment');
     },
 
-    canEditCard(role) {
-        return role === 'leader';
+    canCreateCard() {
+        return this.has('create_card');
     },
 
-    canDeleteCard(role) {
-        return role === 'leader';
+    canEditCard() {
+        return this.has('edit_card');
     },
 
-    canMoveCard(role, card, userId) {
-        if (role === 'leader') return true;
-        if (role === 'developer') return card?.assignee_id === userId;
+    canDeleteCard() {
+        return this.has('delete_card');
+    },
+
+    canMoveCard(card, userId) {
+        if (this.has('move_card')) return true;
+        if (this.has('move_card_own_only') && card?.assignee_id === userId) return true;
         return false;
     },
 
-    canManageColumns(role) {
-        return role === 'leader';
+    canMoveAnyCard() {
+        return this.has('move_card');
     },
 
-    canManageBoard(role) {
-        return role === 'leader';
+    canMoveOwnCard() {
+        return this.has('move_card_own_only');
     },
 
-    canAssign(role) {
-        return role === 'leader';
+    canManageColumns() {
+        return this.has('manage_columns');
     },
 
-    isReadOnlyCard(role) {
-        return role !== 'leader';
+    canManageBoard() {
+        return this.has('manage_board');
     },
 
-    getRoleLabel(role) {
-        return ROLE_LABELS[role] || '';
+    canAssign() {
+        return this.has('assign_card');
+    },
+
+    canArchive() {
+        return this.has('archive_card');
+    },
+
+    canManageTeamMembers() {
+        return this.has('manage_team_members');
+    },
+
+    canManageRoles() {
+        return this.has('manage_roles');
+    },
+
+    canViewDashboard() {
+        return this.has('view_dashboard');
+    },
+
+    canViewAllTasks() {
+        return this.has('view_all_tasks');
+    },
+
+    isReadOnlyCard() {
+        return !this.canEditCard();
+    },
+
+    getRoleLabel(roleOrName) {
+        if (typeof roleOrName === 'string' && ROLE_LABELS[roleOrName]) {
+            return ROLE_LABELS[roleOrName];
+        }
+        return this._roleName || ROLE_LABELS[roleOrName] || roleOrName || '';
     },
 
     getRoleDescription(role) {
-        return ROLE_DESCRIPTIONS[role] || '';
+        if (role && ROLE_DESCRIPTIONS[role]) {
+            return ROLE_DESCRIPTIONS[role];
+        }
+        return '';
     }
 };

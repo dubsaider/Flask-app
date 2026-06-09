@@ -14,10 +14,10 @@ const DashboardPage = {
 
     async resolveAccess() {
         const workspace = await API.getUserWorkspace(Auth.getCurrentUser().id);
-        const isLeader = workspace.some(group => group.role === 'leader');
+        const hasDashboard = workspace.some(group => group.permissions?.view_dashboard);
 
-        if (!isLeader) {
-            this.showEmpty('🔒', 'Дашборд доступен только руководителям команд');
+        if (!hasDashboard) {
+            this.showEmpty('🔒', 'Дашборд недоступен для вашей роли');
             return false;
         }
         return true;

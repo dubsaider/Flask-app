@@ -3,23 +3,21 @@ const Modals = {
         const panel = document.getElementById('card-panel');
         if (!panel) return;
 
-        const role = Permissions.getRole(window.currentTeam);
-
-        if (!cardId && !Permissions.canCreateCard(role)) {
+        if (!cardId && !Permissions.canCreateCard()) {
             return;
         }
 
         if (cardId) {
             Cards.loadCardForEdit(cardId);
         } else {
-            this.prepareNewCard(columnId, role);
+            this.prepareNewCard(columnId);
         }
 
         RichText.clearComment();
 
         const commentForm = document.querySelector('#card-panel .comment-form');
         if (commentForm) {
-            commentForm.classList.toggle('hidden', !Permissions.canComment(role));
+            commentForm.classList.toggle('hidden', !Permissions.canComment());
         }
 
         panel.classList.add('active');
@@ -33,7 +31,7 @@ const Modals = {
         panel?.setAttribute('aria-hidden', 'true');
     },
 
-    prepareNewCard(columnId, role) {
+    prepareNewCard(columnId) {
         document.getElementById('card-panel-title').textContent = 'Новая карточка';
         document.getElementById('card-panel-title')?.classList.add('hidden');
         const titleInput = document.getElementById('card-title-input');
@@ -57,7 +55,15 @@ const Modals = {
         document.querySelector('#card-form .card-edit-actions')?.classList.remove('hidden');
         document.getElementById('card-delete-btn')?.classList.add('hidden');
         document.querySelectorAll('#card-form .leader-only').forEach(el => {
-            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
+            const hasAssignee = el.querySelector('#card-assignee-input');
+            const hasArchive = el.querySelector('#card-archived-input');
+            if (hasAssignee) {
+                el.classList.toggle('hidden', !Permissions.canAssign());
+            } else if (hasArchive) {
+                el.classList.toggle('hidden', !Permissions.canArchive());
+            } else {
+                el.classList.toggle('hidden', !Permissions.canManageBoard());
+            }
         });
 
         Cards.populateAssigneeSelect(null);

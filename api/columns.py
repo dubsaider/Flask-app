@@ -22,12 +22,12 @@ def columns_handler(board_id):
             if not board:
                 return jsonify({'error': 'Board not found'}), 404
 
-            role, error = perm.check_access(conn, board['team_id'], user_id)
+            _, error = perm.check_access(conn, board['team_id'], user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_columns(role):
-                return _forbidden('Only team leader can manage columns')
+            if not perm.can_manage_columns(conn, board['team_id'], user_id):
+                return _forbidden('You cannot manage columns')
 
             max_pos = conn.execute(
                 'SELECT COALESCE(MAX(position), -1) as max_pos FROM columns WHERE board_id = ?',
@@ -88,12 +88,12 @@ def reorder_columns(board_id):
         if not board:
             return jsonify({'error': 'Board not found'}), 404
 
-        role, error = perm.check_access(conn, board['team_id'], user_id)
+        _, error = perm.check_access(conn, board['team_id'], user_id)
         if error:
             return jsonify({'error': error[0]}), error[1]
 
-        if not perm.can_manage_columns(role):
-            return _forbidden('Only team leader can manage columns')
+        if not perm.can_manage_columns(conn, board['team_id'], user_id):
+            return _forbidden('You cannot manage columns')
 
         existing = conn.execute(
             'SELECT id FROM columns WHERE board_id = ? ORDER BY position',
@@ -126,12 +126,12 @@ def column_handler(column_id):
             if not user_id:
                 return _forbidden('user_id is required')
 
-            role, error = perm.check_access(conn, team_id, user_id)
+            _, error = perm.check_access(conn, team_id, user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_columns(role):
-                return _forbidden('Only team leader can manage columns')
+            if not perm.can_manage_columns(conn, team_id, user_id):
+                return _forbidden('You cannot manage columns')
 
             conn.execute(
                 'UPDATE columns SET title = ?, is_done = ? WHERE id = ?',
@@ -148,12 +148,12 @@ def column_handler(column_id):
             if not user_id:
                 return _forbidden('user_id is required')
 
-            role, error = perm.check_access(conn, team_id, user_id)
+            _, error = perm.check_access(conn, team_id, user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_columns(role):
-                return _forbidden('Only team leader can manage columns')
+            if not perm.can_manage_columns(conn, team_id, user_id):
+                return _forbidden('You cannot manage columns')
 
             conn.execute('DELETE FROM columns WHERE id = ?', (column_id,))
             return '', 204

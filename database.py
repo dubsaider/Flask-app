@@ -1,5 +1,6 @@
 import sqlite3
 from contextlib import contextmanager
+from api.role_helpers import seed_default_roles
 
 DATABASE = 'kanban.db'
 
@@ -45,6 +46,80 @@ def migrate_db(conn):
         conn.execute('ALTER TABLE notifications ADD COLUMN board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL')
     if 'card_id' not in notification_fields:
         conn.execute('ALTER TABLE notifications ADD COLUMN card_id INTEGER REFERENCES cards(id) ON DELETE SET NULL')
+
+    migrate_team_roles(conn)
+
+
+def migrate_team_roles(conn):
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS team_roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL,
+            description TEXT,
+            permissions TEXT NOT NULL DEFAULT '{}',
+            is_system INTEGER NOT NULL DEFAULT 0,
+            template_key TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+            UNIQUE(team_id, slug)
+        )
+    ''')
+
+    teams = conn.execute('SELECT id FROM teams').fetchall()
+    for team in teams:
+        seed_default_roles(conn, team['id'])
+
+    member_fields = _table_columns(conn, 'team_members')
+
+    if 'role_id' not in member_fields:
+        conn.execute('ALTER TABLE team_members ADD COLUMN role_id INTEGER REFERENCES team_roles(id)')
+
+    if 'role' in member_fields:
+        rows = conn.execute('SELECT team_id, user_id, role, role_id FROM team_members').fetchall()
+        for row in rows:
+            if row['role_id']:
+                continue
+            legacy_role = row['role'] or 'developer'
+            role_row = conn.execute(
+                'SELECT id FROM team_roles WHERE team_id = ? AND (template_key = ? OR slug = ?)',
+                (row['team_id'], legacy_role, legacy_role)
+            ).fetchone()
+            if role_row:
+                conn.execute(
+                    'UPDATE team_members SET role_id = ? WHERE team_id = ? AND user_id = ?',
+                    (role_row['id'], row['team_id'], row['user_id'])
+                )
+    else:
+        _seed_default_members(conn)
+
+
+def _seed_default_members(conn):
+    """Начальные участники для чистой установки."""
+    defaults = [
+        (1, 1, 'developer'),
+        (1, 2, 'developer'),
+        (1, 3, 'leader'),
+        (2, 5, 'leader'),
+        (2, 1, 'developer'),
+    ]
+    for team_id, user_id, role_key in defaults:
+        exists = conn.execute(
+            'SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?',
+            (team_id, user_id)
+        ).fetchone()
+        if exists:
+            continue
+        role_row = conn.execute(
+            'SELECT id FROM team_roles WHERE team_id = ? AND template_key = ?',
+            (team_id, role_key)
+        ).fetchone()
+        if role_row:
+            conn.execute(
+                'INSERT OR IGNORE INTO team_members (team_id, user_id, role_id) VALUES (?, ?, ?)',
+                (team_id, user_id, role_row['id'])
+            )
 
 def init_db():
     """Инициализация базы данных из schema.sql"""

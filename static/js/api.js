@@ -50,6 +50,18 @@ const API = {
         API.put(`/api/users/${userId}/notifications/read-all`, { user_id: userId }),
 
     getTeam: (id) => API.get(`/api/teams/${id}`),
+    updateTeam: (id, data) => API.put(`/api/teams/${id}`, data),
+
+    getRoleTemplates: () => API.get('/api/role-templates'),
+    getTeamRoles: (teamId, userId) => API.get(`/api/teams/${teamId}/roles?user_id=${userId}`),
+    createTeamRole: (teamId, data) => API.post(`/api/teams/${teamId}/roles`, data),
+    updateTeamRole: (teamId, roleId, data) => API.put(`/api/teams/${teamId}/roles/${roleId}`, data),
+    deleteTeamRole: (teamId, roleId, data) => API.delete(`/api/teams/${teamId}/roles/${roleId}`, data),
+
+    addTeamMember: (teamId, data) => API.post(`/api/teams/${teamId}/members`, data),
+    removeTeamMember: (teamId, data) => API.delete(`/api/teams/${teamId}/members`, data),
+    updateTeamMember: (teamId, memberUserId, data) =>
+        API.put(`/api/teams/${teamId}/members/${memberUserId}`, data),
 
     getBoard: (id) => API.get(`/api/boards/${id}`),
     updateBoard: (id, data) => API.put(`/api/boards/${id}`, data),

@@ -76,14 +76,44 @@ const Auth = {
         return this.currentUser !== null;
     },
 
-    getUserRole(team) {
-        if (!this.currentUser || !team) return 'none';
+    getUserContext(team) {
+        if (!this.currentUser || !team) {
+            return { slug: 'none', name: '', role_id: null, permissions: {} };
+        }
 
-        if (team.curator_id === this.currentUser.id) return 'curator';
+        if (team.curator_id === this.currentUser.id) {
+            const curatorRole = team.roles?.find(r => r.template_key === 'curator' || r.slug === 'curator');
+            if (curatorRole) {
+                return {
+                    slug: curatorRole.slug,
+                    name: curatorRole.name,
+                    role_id: curatorRole.id,
+                    permissions: curatorRole.permissions || {},
+                };
+            }
+            return {
+                slug: 'curator',
+                name: ROLE_LABELS.curator,
+                role_id: null,
+                permissions: TEMPLATE_PERMISSIONS?.curator || { view_board: true, comment: true },
+            };
+        }
 
         const member = team.members?.find(m => m.id === this.currentUser.id);
-        if (member) return member.role;
+        if (member) {
+            const role = team.roles?.find(r => r.id === member.role_id);
+            return {
+                slug: member.role || role?.slug || 'none',
+                name: member.role_name || role?.name || '',
+                role_id: member.role_id || role?.id || null,
+                permissions: role?.permissions || {},
+            };
+        }
 
-        return 'none';
+        return { slug: 'none', name: '', role_id: null, permissions: {} };
+    },
+
+    getUserRole(team) {
+        return this.getUserContext(team).slug;
     }
 };

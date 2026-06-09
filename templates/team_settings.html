@@ -1,0 +1,68 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Настройки команды — Kanban{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team-settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="team-settings page-app" data-team-id="{{ team_id }}">
+    <header class="page-header">
+        <div>
+            <h1 class="page-title" id="team-settings-title">Настройки команды</h1>
+            <p class="page-subtitle" id="team-settings-desc"></p>
+        </div>
+    </header>
+
+    <div class="team-settings__content">
+        <div class="team-settings__tabs" role="tablist">
+            <button type="button" class="team-settings__tab is-active" data-tab="roles">Роли</button>
+            <button type="button" class="team-settings__tab" data-tab="members">Участники</button>
+        </div>
+
+        <section class="team-settings__panel is-active" id="tab-roles" data-panel="roles">
+        <div class="team-settings__toolbar">
+            <div class="team-settings__create">
+                <label class="form-label" for="role-template-select">Создать на основе шаблона</label>
+                <div class="team-settings__create-row">
+                    <select id="role-template-select" class="form-control"></select>
+                    <button type="button" class="btn btn-primary" id="create-role-btn">Создать роль</button>
+                </div>
+            </div>
+        </div>
+        <div id="roles-list" class="roles-list"></div>
+    </section>
+
+    <section class="team-settings__panel hidden" id="tab-members" data-panel="members">
+        <div class="team-settings__toolbar">
+            <div class="team-settings__create">
+                <label class="form-label">Добавить участника</label>
+                <div class="team-settings__create-row team-settings__create-row--members">
+                    <select id="add-member-user" class="form-control"></select>
+                    <select id="add-member-role" class="form-control"></select>
+                    <button type="button" class="btn btn-primary" id="add-member-btn">Добавить</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="team-curator-select">Куратор команды</label>
+                <select id="team-curator-select" class="form-control">
+                    <option value="">Не назначен</option>
+                </select>
+            </div>
+        </div>
+        <div id="members-list" class="members-list"></div>
+    </section>
+
+    <div id="team-settings-empty" class="page-empty hidden">
+        <span class="page-empty__icon">🔒</span>
+        <h2 class="page-empty__title">Нет доступа</h2>
+        <p class="page-empty__text">Настройки команды доступны пользователям с правом управления ролями или участниками.</p>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/team_settings.js') }}"></script>
+{% endblock %}

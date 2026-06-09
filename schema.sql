@@ -17,15 +17,31 @@ CREATE TABLE IF NOT EXISTS teams (
     FOREIGN KEY (curator_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Роли команды (настраиваемые)
+CREATE TABLE IF NOT EXISTS team_roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    description TEXT,
+    permissions TEXT NOT NULL DEFAULT '{}',
+    is_system INTEGER NOT NULL DEFAULT 0,
+    template_key TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    UNIQUE(team_id, slug)
+);
+
 -- Участники команды с ролями
 CREATE TABLE IF NOT EXISTS team_members (
     team_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('leader', 'developer')),
+    role_id INTEGER NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (team_id, user_id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES team_roles(id) ON DELETE RESTRICT
 );
 
 -- Доски
@@ -105,12 +121,7 @@ INSERT OR IGNORE INTO teams (id, name, description, curator_id) VALUES
     (1, 'Development Team', 'Main development team', 4),
     (2, 'Design Team', 'UI/UX design team', NULL);
 
-INSERT OR IGNORE INTO team_members (team_id, user_id, role) VALUES 
-    (1, 1, 'developer'),
-    (1, 2, 'developer'),
-    (1, 3, 'leader'),
-    (2, 5, 'leader'),
-    (2, 1, 'developer');
+-- Роли и участники создаются миграцией migrate_team_roles()
 
 INSERT OR IGNORE INTO boards (id, title, description, team_id) VALUES 
     (1, 'Sprint 1', 'First sprint board', 1),

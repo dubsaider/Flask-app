@@ -102,18 +102,24 @@ def get_leader_dashboard(user_id):
     """Дашборд для руководителя — статистика по командам"""
     with get_db_context() as conn:
         leader_teams = conn.execute('''
-            SELECT t.*
+            SELECT DISTINCT t.*
             FROM teams t
             JOIN team_members tm ON t.id = tm.team_id
-            WHERE tm.user_id = ? AND tm.role = 'leader'
+            JOIN team_roles tr ON tm.role_id = tr.id
+            WHERE tm.user_id = ?
             ORDER BY t.name
         ''', (user_id,)).fetchall()
 
-        if not leader_teams:
-            return jsonify({'error': 'Not a team leader'}), 403
+        accessible_teams = [
+            team for team in leader_teams
+            if perm.can_view_dashboard(conn, team['id'], user_id)
+        ]
+
+        if not accessible_teams:
+            return jsonify({'error': 'Dashboard access denied'}), 403
 
         result = []
-        for team in leader_teams:
+        for team in accessible_teams:
             team_id = team['id']
 
             rows = conn.execute('''
@@ -170,9 +176,10 @@ def get_leader_dashboard(user_id):
                     overdue.append(card)
 
             members = conn.execute('''
-                SELECT u.id, u.username, tm.role
+                SELECT u.id, u.username, tr.slug AS role, tr.name AS role_name
                 FROM users u
                 JOIN team_members tm ON u.id = tm.user_id
+                JOIN team_roles tr ON tm.role_id = tr.id
                 WHERE tm.team_id = ?
             ''', (team_id,)).fetchall()
 

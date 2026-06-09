@@ -18,6 +18,10 @@ class User:
         }
         if self.role:
             result['role'] = self.role
+        if hasattr(self, 'role_id') and self.role_id:
+            result['role_id'] = self.role_id
+        if hasattr(self, 'role_name') and self.role_name:
+            result['role_name'] = self.role_name
         return result
 
 class Team:
@@ -30,6 +34,7 @@ class Team:
         self.created_at = row['created_at']
         self.members = []
         self.curator = None
+        self.roles = []
     
     def to_dict(self):
         result = {
@@ -38,7 +43,8 @@ class Team:
             'description': self.description,
             'curator_id': self.curator_id,
             'created_at': self.created_at,
-            'members': [m.to_dict() for m in self.members]
+            'members': [m.to_dict() for m in self.members],
+            'roles': self.roles,
         }
         if self.curator:
             result['curator'] = self.curator.to_dict()

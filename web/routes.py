@@ -20,3 +20,7 @@ def tasks_page():
 @web_bp.route('/dashboard')
 def dashboard_page():
     return render_template('dashboard.html')
+
+@web_bp.route('/team/<int:team_id>/settings')
+def team_settings_page(team_id):
+    return render_template('team_settings.html', team_id=team_id)

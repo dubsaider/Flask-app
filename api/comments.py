@@ -25,11 +25,11 @@ def comments_handler(card_id):
                 return jsonify({'error': 'Card not found'}), 404
 
             team_id = perm.get_team_id_for_card(conn, card_id)
-            role, error = perm.check_access(conn, team_id, user_id)
+            _, error = perm.check_access(conn, team_id, user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_comment(role):
+            if not perm.can_comment(conn, team_id, user_id):
                 return _forbidden('You cannot comment on this card')
 
             cursor = conn.execute(

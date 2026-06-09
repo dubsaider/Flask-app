@@ -61,8 +61,12 @@ const Sidebar = {
     },
 
     updateNav() {
-        const isLeader = this.workspace.some(group => group.role === 'leader');
-        document.getElementById('nav-dashboard')?.classList.toggle('hidden', !isLeader);
+        const showDashboard = this.workspace.some(group => group.permissions?.view_dashboard);
+        const showTeamSettings = this.workspace.some(group =>
+            group.permissions?.manage_roles || group.permissions?.manage_team_members
+        );
+        document.getElementById('nav-dashboard')?.classList.toggle('hidden', !showDashboard);
+        document.getElementById('nav-team-settings')?.classList.toggle('hidden', !showTeamSettings);
 
         document.querySelectorAll('.sidebar-page-link').forEach(link => {
             const active = link.dataset.page === this.currentPage;
@@ -125,11 +129,11 @@ const Sidebar = {
         if (role) role.textContent = '';
     },
 
-    updateRole(roleKey) {
+    updateRole(roleKey, roleName) {
         const roleEl = document.getElementById('sidebar-user-role');
         if (!roleEl) return;
 
-        roleEl.textContent = Permissions.getRoleLabel(roleKey);
+        roleEl.textContent = roleName || Permissions.getRoleLabel(roleKey);
         roleEl.title = Permissions.getRoleDescription(roleKey);
     },
 

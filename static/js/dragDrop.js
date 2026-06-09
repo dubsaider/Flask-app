@@ -12,10 +12,10 @@ const DragDrop = {
         this.instances = [];
     },
 
-    init(columns, role) {
+    init(columns) {
         this.destroy();
 
-        if (role !== 'leader' && role !== 'developer') return;
+        if (!Permissions.canMoveAnyCard() && !Permissions.canMoveOwnCard()) return;
 
         const userId = Auth.getCurrentUser().id;
 
@@ -35,7 +35,7 @@ const DragDrop = {
             this.instances.push(sortable);
         });
 
-        if (role === 'leader') {
+        if (Permissions.canManageColumns()) {
             this.initColumnReorder();
         }
     },

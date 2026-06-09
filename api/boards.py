@@ -22,12 +22,12 @@ def boards_handler():
             if not team:
                 return jsonify({'error': 'Team not found'}), 404
 
-            role, error = perm.check_access(conn, team['id'], user_id)
+            _, error = perm.check_access(conn, team['id'], user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_board(role):
-                return _forbidden('Only team leader can create boards')
+            if not perm.can_manage_board(conn, team['id'], user_id):
+                return _forbidden('You cannot create boards')
 
             cursor = conn.execute(
                 'INSERT INTO boards (title, description, team_id) VALUES (?, ?, ?)',
@@ -63,12 +63,12 @@ def board_handler(board_id):
             if not board:
                 return jsonify({'error': 'Board not found'}), 404
 
-            role, error = perm.check_access(conn, board['team_id'], user_id)
+            _, error = perm.check_access(conn, board['team_id'], user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_board(role):
-                return _forbidden('Only team leader can edit boards')
+            if not perm.can_manage_board(conn, board['team_id'], user_id):
+                return _forbidden('You cannot edit boards')
 
             conn.execute(
                 'UPDATE boards SET title = ?, description = ? WHERE id = ?',
@@ -87,12 +87,12 @@ def board_handler(board_id):
             if not board:
                 return jsonify({'error': 'Board not found'}), 404
 
-            role, error = perm.check_access(conn, board['team_id'], user_id)
+            _, error = perm.check_access(conn, board['team_id'], user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_manage_board(role):
-                return _forbidden('Only team leader can delete boards')
+            if not perm.can_manage_board(conn, board['team_id'], user_id):
+                return _forbidden('You cannot delete boards')
 
             conn.execute('DELETE FROM boards WHERE id = ?', (board_id,))
             return '', 204

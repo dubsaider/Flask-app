@@ -19,6 +19,40 @@ const ROLE_DESCRIPTIONS = {
     none: ''
 };
 
+const TEMPLATE_PERMISSIONS = {
+    leader: {
+        view_board: true, comment: true, create_card: true, edit_card: true,
+        delete_card: true, move_card: true, move_card_own_only: true,
+        assign_card: true, archive_card: true, manage_columns: true,
+        manage_board: true, manage_team_members: true, manage_roles: true,
+        view_dashboard: true, view_all_tasks: true
+    },
+    developer: {
+        view_board: true, comment: true, move_card_own_only: true
+    },
+    curator: {
+        view_board: true, comment: true
+    }
+};
+
+const PERMISSION_LABELS = {
+    view_board: 'Просмотр доски',
+    comment: 'Комментарии',
+    create_card: 'Создание задач',
+    edit_card: 'Редактирование задач',
+    delete_card: 'Удаление задач',
+    move_card: 'Перемещение любых задач',
+    move_card_own_only: 'Перемещение своих задач',
+    assign_card: 'Назначение исполнителя',
+    archive_card: 'Архивирование задач',
+    manage_columns: 'Управление колонками',
+    manage_board: 'Управление досками',
+    manage_team_members: 'Управление участниками',
+    manage_roles: 'Настройка ролей',
+    view_dashboard: 'Дашборд команды',
+    view_all_tasks: 'Просмотр всех задач'
+};
+
 const WORKFLOW_LABELS = {
     active: 'В работе',
     completed: 'Завершена',

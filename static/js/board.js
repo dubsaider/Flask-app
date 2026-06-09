@@ -56,21 +56,22 @@ const Board = {
 
             Sidebar.refresh(this.boardId);
 
-            const role = Permissions.getRole(this.currentTeam);
-            this.currentRole = role;
-            Sidebar.updateRole(role);
+            const ctx = Auth.getUserContext(this.currentTeam);
+            Permissions.setContext(ctx.permissions, ctx.slug, ctx.name);
+            this.currentRole = ctx.slug;
+            Sidebar.updateRole(ctx.slug, ctx.name);
 
             TaskFilters.populateAssignees(this.currentTeam.members);
-            TaskFilters.showMineOption(role === 'leader');
+            TaskFilters.showMineOption(!Permissions.canViewAllTasks());
 
-            if (!Permissions.canViewBoard(role)) {
+            if (!Permissions.canViewBoard()) {
                 this.showState('🔒', 'Доступ запрещён', 'Вы не являетесь участником этой команды', [
                     { text: 'Войти', href: '/login', primary: true }
                 ]);
                 return;
             }
 
-            this.applyPermissions(role);
+            this.applyPermissions();
             await this.loadColumns();
             this.openCardFromQuery();
         } catch (error) {
@@ -107,13 +108,21 @@ const Board = {
         DOM.hide(document.getElementById('board-state'));
     },
 
-    applyPermissions(role) {
+    applyPermissions() {
         document.querySelectorAll('.board-actions.leader-only').forEach(el => {
-            el.classList.toggle('hidden', !Permissions.canManageBoard(role));
+            el.classList.toggle('hidden', !Permissions.canManageBoard());
         });
         document.getElementById('add-column-toolbar-btn')?.classList.toggle(
-            'hidden', !Permissions.canManageColumns(role)
+            'hidden', !Permissions.canManageColumns()
         );
+        document.getElementById('nav-team-settings')?.classList.toggle(
+            'hidden',
+            !Permissions.canManageRoles() && !Permissions.canManageTeamMembers()
+        );
+        const settingsLink = document.getElementById('nav-team-settings');
+        if (settingsLink && this.currentTeam) {
+            settingsLink.href = `/team/${this.currentTeam.id}/settings`;
+        }
     },
 
     async loadColumns() {
@@ -140,14 +149,14 @@ const Board = {
         const shown = TaskFilters.countCards(filtered);
 
         TaskFilters.updateCount(shown, total);
-        this.render(filtered, this.currentRole);
+        this.render(filtered);
 
-        if (this.currentRole === 'leader' || this.currentRole === 'developer') {
-            DragDrop.init(this.rawColumns, this.currentRole);
+        if (Permissions.canMoveAnyCard() || Permissions.canMoveOwnCard()) {
+            DragDrop.init(this.rawColumns);
         }
     },
 
-    render(columns, role) {
+    render(columns) {
         const container = document.getElementById('board-container');
         if (!container) return;
 
@@ -170,7 +179,7 @@ const Board = {
             cardsList.id = `cards-${column.id}`;
             titleBtn.textContent = column.title;
 
-            if (Permissions.canManageColumns(role)) {
+            if (Permissions.canManageColumns()) {
                 columnEl.classList.add('column--manageable');
                 DOM.show(menuBtn);
                 DOM.show(dragHandle);
@@ -187,10 +196,10 @@ const Board = {
             }
 
             (column.cards || []).forEach(card => {
-                cardsList.appendChild(this.createCardElement(card, role, userId));
+                cardsList.appendChild(this.createCardElement(card, userId));
             });
 
-            if (Permissions.canCreateCard(role)) {
+            if (Permissions.canCreateCard()) {
                 DOM.show(addCardBtn);
                 addCardBtn.addEventListener('click', () => Modals.openCard(null, column.id));
             }
@@ -198,7 +207,7 @@ const Board = {
             container.appendChild(columnNode);
         });
 
-        if (Permissions.canManageColumns(role)) {
+        if (Permissions.canManageColumns()) {
             const addColumnNode = DOM.clone('tpl-add-column-btn');
             addColumnNode.querySelector('[data-field="add-column-btn"]')
                 .addEventListener('click', () => Columns.add());
@@ -206,7 +215,7 @@ const Board = {
         }
     },
 
-    createCardElement(card, role, userId) {
+    createCardElement(card, userId) {
         const node = DOM.clone('tpl-card-item');
         const cardEl = node.querySelector('[data-field="card"]');
         const priority = card.priority || 'medium';
@@ -237,7 +246,7 @@ const Board = {
             DOM.show(node.querySelector('[data-field="comments"]'));
         }
 
-        if (Permissions.canMoveCard(role, card, userId)) {
+        if (Permissions.canMoveCard(card, userId)) {
             cardEl.classList.add('card-item--draggable');
         }
 

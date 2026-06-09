@@ -29,8 +29,8 @@ def create_card():
         if error:
             return jsonify({'error': error[0]}), error[1]
 
-        if not perm.can_create_card(role):
-            return _forbidden('Only team leader can create tasks')
+        if not perm.can_create_card(conn, team_id, user_id):
+            return _forbidden('You cannot create tasks')
 
         max_pos = conn.execute(
             'SELECT COALESCE(MAX(position), -1) as max_pos FROM cards WHERE column_id = ?',
@@ -65,28 +65,28 @@ def card_handler(card_id):
                 return jsonify({'error': 'Card not found'}), 404
 
             team_id = perm.get_team_id_for_card(conn, card_id)
-            role, error = perm.check_access(conn, team_id, user_id)
+            _, error = perm.check_access(conn, team_id, user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_edit_card(role, existing, user_id):
+            if not perm.can_edit_card(conn, team_id, user_id, existing):
                 return _forbidden('You cannot edit this card')
 
-            if 'assignee_id' in data and not perm.can_assign(role):
-                return _forbidden('Only team leader can change assignee')
+            if 'assignee_id' in data and not perm.can_assign(conn, team_id, user_id):
+                return _forbidden('You cannot change assignee')
 
             assignee_id = data['assignee_id'] if 'assignee_id' in data else existing['assignee_id']
 
             new_status = existing['status']
             if 'archived' in data:
-                if not perm.can_manage_board(role):
-                    return _forbidden('Only team leader can archive tasks')
+                if not perm.can_archive(conn, team_id, user_id):
+                    return _forbidden('You cannot archive tasks')
                 new_status = 'archived' if data['archived'] else 'active'
             elif 'status' in data:
                 if data['status'] not in ('active', 'archived'):
                     return jsonify({'error': 'Invalid status'}), 400
-                if data['status'] == 'archived' and not perm.can_manage_board(role):
-                    return _forbidden('Only team leader can archive tasks')
+                if data['status'] == 'archived' and not perm.can_archive(conn, team_id, user_id):
+                    return _forbidden('You cannot archive tasks')
                 new_status = data['status']
 
             conn.execute(
@@ -116,12 +116,12 @@ def card_handler(card_id):
                 return _forbidden('user_id is required')
 
             team_id = perm.get_team_id_for_card(conn, card_id)
-            role, error = perm.check_access(conn, team_id, user_id)
+            _, error = perm.check_access(conn, team_id, user_id)
             if error:
                 return jsonify({'error': error[0]}), error[1]
 
-            if not perm.can_delete_card(role):
-                return _forbidden('Only team leader can delete tasks')
+            if not perm.can_delete_card(conn, team_id, user_id):
+                return _forbidden('You cannot delete tasks')
 
             conn.execute('DELETE FROM cards WHERE id = ?', (card_id,))
             return '', 204
@@ -178,11 +178,11 @@ def move_card(card_id):
             return jsonify({'error': 'Card not found'}), 404
 
         team_id = perm.get_team_id_for_card(conn, card_id)
-        role, error = perm.check_access(conn, team_id, user_id)
+        _, error = perm.check_access(conn, team_id, user_id)
         if error:
             return jsonify({'error': error[0]}), error[1]
 
-        if not perm.can_move_card(role, card, user_id):
+        if not perm.can_move_card(conn, team_id, user_id, card):
             return _forbidden('You cannot move this card')
 
         new_column = conn.execute(

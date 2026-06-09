@@ -35,13 +35,19 @@ def get_user_workspace(user_id):
                 (team_row['id'],)
             ).fetchall()
 
+            role_info = perm.get_user_role_info(conn, team_row['id'], user_id)
+
             workspace.append({
                 'team': {
                     'id': team_row['id'],
                     'name': team_row['name'],
                     'description': team_row['description'],
+                    'curator_id': team_row['curator_id'],
                 },
-                'role': perm.get_user_role(conn, team_row['id'], user_id),
+                'role': role_info['slug'],
+                'role_name': role_info['name'],
+                'role_id': role_info['role_id'],
+                'permissions': role_info['permissions'],
                 'boards': [Board(board).to_dict() for board in boards]
             })
 
