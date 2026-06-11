@@ -1,15 +1,20 @@
 from flask import jsonify, request
 from datetime import datetime
+from sqlalchemy import func
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden, not_found, bad_request, access_denied
 from models import Card, User, Comment
+from models.schema import (
+    Card as CardModel,
+    Column as ColumnModel,
+    Board as BoardModel,
+    Comment as CommentModel,
+    User as UserModel,
+)
 from . import permissions as perm
 from utils.html_sanitize import sanitize_html
 from .notify_helpers import notify_assignee, notify_comment
-
-
-def _forbidden(message):
-    return jsonify({'error': message}), 403
 
 
 @api_bp.route('/cards', methods=['POST'])
@@ -18,148 +23,154 @@ def create_card():
     user_id = data.get('user_id')
 
     if not user_id:
-        return _forbidden('user_id is required')
+        return forbidden('user_id is required')
 
-    with get_db_context() as conn:
-        team_id = perm.get_team_id_for_column(conn, data['column_id'])
+    with session_scope() as session:
+        team_id = perm.get_team_id_for_column(session, data['column_id'])
         if not team_id:
-            return jsonify({'error': 'Column not found'}), 404
+            return not_found('Column not found')
 
-        role, error = perm.check_access(conn, team_id, user_id)
-        if error:
-            return jsonify({'error': error[0]}), error[1]
+        _, error = perm.check_access(session, team_id, user_id)
+        denied = access_denied(error)
+        if denied:
+            return denied
 
-        if not perm.can_create_card(conn, team_id, user_id):
-            return _forbidden('You cannot create tasks')
+        if not perm.can_create_card(session, team_id, user_id):
+            return forbidden('You cannot create tasks')
 
-        max_pos = conn.execute(
-            'SELECT COALESCE(MAX(position), -1) as max_pos FROM cards WHERE column_id = ?',
-            (data['column_id'],)
-        ).fetchone()['max_pos']
-
-        cursor = conn.execute(
-            '''INSERT INTO cards (title, description, position, column_id, assignee_id, created_by, priority, deadline)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-            (data['title'], sanitize_html(data.get('description', '')), max_pos + 1, data['column_id'],
-             data.get('assignee_id'), user_id, data.get('priority', 'medium'),
-             data.get('deadline'))
+        max_pos = (
+            session.query(func.coalesce(func.max(CardModel.position), -1))
+            .filter_by(column_id=data['column_id'])
+            .scalar()
         )
-        card = conn.execute('SELECT * FROM cards WHERE id = ?', (cursor.lastrowid,)).fetchone()
+
+        card = CardModel(
+            title=data['title'],
+            description=sanitize_html(data.get('description', '')),
+            position=max_pos + 1,
+            column_id=data['column_id'],
+            assignee_id=data.get('assignee_id'),
+            created_by=user_id,
+            priority=data.get('priority', 'medium'),
+            deadline=data.get('deadline'),
+        )
+        session.add(card)
+        session.flush()
+
         assignee_id = data.get('assignee_id')
         if assignee_id:
-            notify_assignee(conn, card['id'], assignee_id, user_id, action='assigned')
+            notify_assignee(session, card.id, assignee_id, user_id, action='assigned')
         return jsonify(Card(card).to_dict()), 201
 
 
 @api_bp.route('/cards/<int:card_id>', methods=['GET', 'PUT', 'DELETE'])
 def card_handler(card_id):
-    with get_db_context() as conn:
+    with session_scope() as session:
         if request.method == 'PUT':
             data = request.json
             user_id = data.get('user_id')
             if not user_id:
-                return _forbidden('user_id is required')
+                return forbidden('user_id is required')
 
-            existing = perm.get_card(conn, card_id)
+            existing = perm.get_card(session, card_id)
             if not existing:
-                return jsonify({'error': 'Card not found'}), 404
+                return not_found('Card not found')
 
-            team_id = perm.get_team_id_for_card(conn, card_id)
-            _, error = perm.check_access(conn, team_id, user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            team_id = perm.get_team_id_for_card(session, card_id)
+            _, error = perm.check_access(session, team_id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_edit_card(conn, team_id, user_id, existing):
-                return _forbidden('You cannot edit this card')
+            if not perm.can_edit_card(session, team_id, user_id, existing):
+                return forbidden('You cannot edit this card')
 
-            if 'assignee_id' in data and not perm.can_assign(conn, team_id, user_id):
-                return _forbidden('You cannot change assignee')
+            if 'assignee_id' in data and not perm.can_assign(session, team_id, user_id):
+                return forbidden('You cannot change assignee')
 
-            assignee_id = data['assignee_id'] if 'assignee_id' in data else existing['assignee_id']
+            assignee_id = data['assignee_id'] if 'assignee_id' in data else existing.assignee_id
+            old_assignee_id = existing.assignee_id
 
-            new_status = existing['status']
+            new_status = existing.status
             if 'archived' in data:
-                if not perm.can_archive(conn, team_id, user_id):
-                    return _forbidden('You cannot archive tasks')
+                if not perm.can_archive(session, team_id, user_id):
+                    return forbidden('You cannot archive tasks')
                 new_status = 'archived' if data['archived'] else 'active'
             elif 'status' in data:
                 if data['status'] not in ('active', 'archived'):
-                    return jsonify({'error': 'Invalid status'}), 400
-                if data['status'] == 'archived' and not perm.can_archive(conn, team_id, user_id):
-                    return _forbidden('You cannot archive tasks')
+                    return bad_request('Invalid status')
+                if data['status'] == 'archived' and not perm.can_archive(session, team_id, user_id):
+                    return forbidden('You cannot archive tasks')
                 new_status = data['status']
 
-            conn.execute(
-                '''UPDATE cards
-                   SET title = ?, description = ?, assignee_id = ?, priority = ?,
-                       status = ?, deadline = ?, updated_at = ?
-                   WHERE id = ?''',
-                (data['title'], sanitize_html(data.get('description', '')), assignee_id,
-                 data.get('priority', 'medium'), new_status,
-                 data.get('deadline'), datetime.now(), card_id)
-            )
+            existing.title = data['title']
+            existing.description = sanitize_html(data.get('description', ''))
+            existing.assignee_id = assignee_id
+            existing.priority = data.get('priority', 'medium')
+            existing.status = new_status
+            existing.deadline = data.get('deadline')
+            existing.updated_at = datetime.utcnow()
 
-            if assignee_id and assignee_id != existing['assignee_id']:
-                notify_assignee(conn, card_id, assignee_id, user_id, action='reassigned')
+            if assignee_id and assignee_id != old_assignee_id:
+                notify_assignee(session, card_id, assignee_id, user_id, action='reassigned')
 
-            card = conn.execute('SELECT * FROM cards WHERE id = ?', (card_id,)).fetchone()
-            column = conn.execute(
-                'SELECT is_done FROM columns WHERE id = ?',
-                (card['column_id'],)
-            ).fetchone()
-            return jsonify(Card(card).to_dict(column_is_done=bool(column['is_done'])))
+            column = session.get(ColumnModel, existing.column_id)
+            column_is_done = bool(column.is_done) if column else False
+            return jsonify(Card(existing).to_dict(column_is_done=column_is_done))
 
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             data = request.json or {}
             user_id = data.get('user_id')
             if not user_id:
-                return _forbidden('user_id is required')
+                return forbidden('user_id is required')
 
-            team_id = perm.get_team_id_for_card(conn, card_id)
-            _, error = perm.check_access(conn, team_id, user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            team_id = perm.get_team_id_for_card(session, card_id)
+            _, error = perm.check_access(session, team_id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_delete_card(conn, team_id, user_id):
-                return _forbidden('You cannot delete tasks')
+            if not perm.can_delete_card(session, team_id, user_id):
+                return forbidden('You cannot delete tasks')
 
-            conn.execute('DELETE FROM cards WHERE id = ?', (card_id,))
+            card = session.get(CardModel, card_id)
+            if card:
+                session.delete(card)
             return '', 204
 
-        card = conn.execute('SELECT * FROM cards WHERE id = ?', (card_id,)).fetchone()
-        if card:
-            card_obj = Card(card)
+        card_model = session.get(CardModel, card_id)
+        if card_model:
+            card_obj = Card(card_model)
 
             if card_obj.assignee_id:
-                assignee = conn.execute('SELECT * FROM users WHERE id = ?', (card_obj.assignee_id,)).fetchone()
+                assignee = session.get(UserModel, card_obj.assignee_id)
                 if assignee:
                     card_obj.assignee = User(assignee)
 
             if card_obj.created_by:
-                creator = conn.execute('SELECT * FROM users WHERE id = ?', (card_obj.created_by,)).fetchone()
+                creator = session.get(UserModel, card_obj.created_by)
                 if creator:
                     card_obj.creator = User(creator)
 
-            comments = conn.execute(
-                'SELECT * FROM comments WHERE card_id = ? ORDER BY created_at',
-                (card_id,)
-            ).fetchall()
+            comments = (
+                session.query(CommentModel)
+                .filter_by(card_id=card_id)
+                .order_by(CommentModel.created_at)
+                .all()
+            )
 
-            for comment_row in comments:
-                comment = Comment(comment_row)
-                author = conn.execute('SELECT * FROM users WHERE id = ?', (comment.user_id,)).fetchone()
+            for comment_model in comments:
+                comment = Comment(comment_model)
+                author = session.get(UserModel, comment.user_id)
                 if author:
                     comment.author = User(author)
                 card_obj.comments.append(comment)
 
-            column = conn.execute(
-                'SELECT is_done FROM columns WHERE id = ?',
-                (card_obj.column_id,)
-            ).fetchone()
-            column_is_done = bool(column['is_done']) if column else False
+            column = session.get(ColumnModel, card_obj.column_id)
+            column_is_done = bool(column.is_done) if column else False
 
             return jsonify(card_obj.to_dict(column_is_done=column_is_done))
-        return jsonify({'error': 'Card not found'}), 404
+        return not_found('Card not found')
 
 
 @api_bp.route('/cards/<int:card_id>/move', methods=['PUT'])
@@ -170,71 +181,65 @@ def move_card(card_id):
     new_position = data['position']
 
     if not user_id:
-        return _forbidden('user_id is required')
+        return forbidden('user_id is required')
 
-    with get_db_context() as conn:
-        card = perm.get_card(conn, card_id)
+    with session_scope() as session:
+        card = perm.get_card(session, card_id)
         if not card:
-            return jsonify({'error': 'Card not found'}), 404
+            return not_found('Card not found')
 
-        team_id = perm.get_team_id_for_card(conn, card_id)
-        _, error = perm.check_access(conn, team_id, user_id)
-        if error:
-            return jsonify({'error': error[0]}), error[1]
+        team_id = perm.get_team_id_for_card(session, card_id)
+        _, error = perm.check_access(session, team_id, user_id)
+        denied = access_denied(error)
+        if denied:
+            return denied
 
-        if not perm.can_move_card(conn, team_id, user_id, card):
-            return _forbidden('You cannot move this card')
+        if not perm.can_move_card(session, team_id, user_id, card):
+            return forbidden('You cannot move this card')
 
-        new_column = conn.execute(
-            'SELECT board_id FROM columns WHERE id = ?',
-            (new_column_id,)
-        ).fetchone()
+        new_column = session.get(ColumnModel, new_column_id)
         if not new_column:
-            return jsonify({'error': 'Target column not found'}), 404
+            return not_found('Target column not found')
 
-        card_board = conn.execute('''
-            SELECT b.id FROM boards b
-            JOIN columns col ON col.board_id = b.id
-            WHERE col.id = ?
-        ''', (card['column_id'],)).fetchone()
-        if not card_board or new_column['board_id'] != card_board['id']:
-            return _forbidden('Cannot move card to another board')
+        card_board = (
+            session.query(BoardModel.id)
+            .join(ColumnModel, ColumnModel.board_id == BoardModel.id)
+            .filter(ColumnModel.id == card.column_id)
+            .first()
+        )
+        if not card_board or new_column.board_id != card_board[0]:
+            return forbidden('Cannot move card to another board')
 
-        old_column_id = card['column_id']
-        old_position = card['position']
+        old_column_id = card.column_id
+        old_position = card.position
 
-        try:
-            if old_column_id == new_column_id:
-                if new_position > old_position:
-                    conn.execute(
-                        '''UPDATE cards SET position = position - 1
-                           WHERE column_id = ? AND position > ? AND position <= ? AND id != ?''',
-                        (old_column_id, old_position, new_position, card_id)
-                    )
-                elif new_position < old_position:
-                    conn.execute(
-                        '''UPDATE cards SET position = position + 1
-                           WHERE column_id = ? AND position >= ? AND position < ? AND id != ?''',
-                        (old_column_id, new_position, old_position, card_id)
-                    )
-                conn.execute(
-                    'UPDATE cards SET position = ?, updated_at = ? WHERE id = ?',
-                    (new_position, datetime.now(), card_id)
-                )
-            else:
-                conn.execute(
-                    'UPDATE cards SET position = position - 1 WHERE column_id = ? AND position > ?',
-                    (old_column_id, old_position)
-                )
-                conn.execute(
-                    'UPDATE cards SET position = position + 1 WHERE column_id = ? AND position >= ?',
-                    (new_column_id, new_position)
-                )
-                conn.execute(
-                    'UPDATE cards SET column_id = ?, position = ?, updated_at = ? WHERE id = ?',
-                    (new_column_id, new_position, datetime.now(), card_id)
-                )
+        if old_column_id == new_column_id:
+            if new_position > old_position:
+                session.query(CardModel).filter(
+                    CardModel.column_id == old_column_id,
+                    CardModel.position > old_position,
+                    CardModel.position <= new_position,
+                    CardModel.id != card_id,
+                ).update({CardModel.position: CardModel.position - 1}, synchronize_session=False)
+            elif new_position < old_position:
+                session.query(CardModel).filter(
+                    CardModel.column_id == old_column_id,
+                    CardModel.position >= new_position,
+                    CardModel.position < old_position,
+                    CardModel.id != card_id,
+                ).update({CardModel.position: CardModel.position + 1}, synchronize_session=False)
+            card.position = new_position
+        else:
+            session.query(CardModel).filter(
+                CardModel.column_id == old_column_id,
+                CardModel.position > old_position,
+            ).update({CardModel.position: CardModel.position - 1}, synchronize_session=False)
+            session.query(CardModel).filter(
+                CardModel.column_id == new_column_id,
+                CardModel.position >= new_position,
+            ).update({CardModel.position: CardModel.position + 1}, synchronize_session=False)
+            card.column_id = new_column_id
+            card.position = new_position
 
-            return jsonify({'message': 'Card moved successfully'})
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+        card.updated_at = datetime.utcnow()
+        return jsonify({'message': 'Card moved successfully'})

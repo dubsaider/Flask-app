@@ -1,43 +1,45 @@
 """Шаблоны ролей и описание прав доступа."""
 import json
 
-from labels import PERMISSION_LABELS
+from labels import PERMISSION_LABELS, ROLE_DESCRIPTIONS, ROLE_LABELS
 
 ALL_PERMISSION_KEYS = list(PERMISSION_LABELS.keys())
 
-_FULL = {key: True for key in ALL_PERMISSION_KEYS}
+
+def _all_permissions(enabled=True):
+    return {key: enabled for key in ALL_PERMISSION_KEYS}
+
+
+def _permissions(**enabled):
+    base = _all_permissions(False)
+    base.update(enabled)
+    return base
+
 
 ROLE_TEMPLATES = {
     'leader': {
-        'name': 'Руководитель',
-        'description': 'Полное управление доской, задачами и командой',
-        'permissions': dict(_FULL),
+        'name': ROLE_LABELS['leader'],
+        'description': ROLE_DESCRIPTIONS['leader'],
+        'permissions': _all_permissions(True),
         'is_system': True,
     },
     'developer': {
-        'name': 'Разработчик',
-        'description': 'Перемещение своих задач на доске и комментарии',
-        'permissions': {
-            'view_board': True,
-            'comment': True,
-            'move_card_own_only': True,
-        },
+        'name': ROLE_LABELS['developer'],
+        'description': ROLE_DESCRIPTIONS['developer'],
+        'permissions': _permissions(view_board=True, comment=True, move_card_own_only=True),
         'is_system': True,
     },
     'curator': {
-        'name': 'Куратор',
-        'description': 'Просмотр и комментарии без редактирования',
-        'permissions': {
-            'view_board': True,
-            'comment': True,
-        },
+        'name': ROLE_LABELS['curator'],
+        'description': ROLE_DESCRIPTIONS['curator'],
+        'permissions': _permissions(view_board=True, comment=True),
         'is_system': True,
     },
 }
 
 
 def default_permissions():
-    return {key: False for key in ALL_PERMISSION_KEYS}
+    return _all_permissions(False)
 
 
 def normalize_permissions(raw):
@@ -77,3 +79,11 @@ def templates_for_api():
             'is_system': template.get('is_system', True),
         })
     return result
+
+
+def template_permissions_for_client():
+    """Матрица прав шаблонов для window.APP_CONFIG."""
+    return {
+        key: normalize_permissions(template['permissions'])
+        for key, template in ROLE_TEMPLATES.items()
+    }

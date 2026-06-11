@@ -6,7 +6,6 @@ from flask_migrate import upgrade
 
 from config import client_config, get_config
 from labels import get_labels
-from database import init_app as init_db_app
 from extensions import db, migrate
 from api.init import api_bp
 from web.init import web_bp
@@ -26,7 +25,6 @@ def create_app(config_name=None):
 
     db.init_app(app)
     migrate.init_app(app, db)
-    init_db_app(app)
 
     app.register_blueprint(api_bp)
     app.register_blueprint(web_bp)

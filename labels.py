@@ -99,7 +99,6 @@ LABELS = {
         'delete_board': 'Удалить',
         'column_settings': 'Настройки колонки',
         'drag_column': 'Перетащить колонку',
-        'drag_column': 'Перетащить колонку',
         'access_denied_title': 'Доступ запрещён',
         'access_denied_message': 'Вы не являетесь участником этой команды',
         'delete_confirm': 'Удалить эту доску?',

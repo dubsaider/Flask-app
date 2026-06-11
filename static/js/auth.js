@@ -95,7 +95,7 @@ const Auth = {
                 slug: 'curator',
                 name: ROLE_LABELS.curator,
                 role_id: null,
-                permissions: TEMPLATE_PERMISSIONS?.curator || { view_board: true, comment: true },
+                permissions: TEMPLATE_PERMISSIONS.curator || { view_board: true, comment: true },
             };
         }
 

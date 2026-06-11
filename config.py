@@ -91,6 +91,7 @@ def _cfg_value(cfg, key, default=None):
 def client_config(cfg=None) -> dict:
     """Настройки, безопасные для передачи в браузер."""
     from labels import get_client_labels
+    from api.role_templates import template_permissions_for_client
 
     if cfg is None:
         cfg = get_config()
@@ -99,4 +100,5 @@ def client_config(cfg=None) -> dict:
     return {
         'richTextMaxImageSize': _cfg_value(cfg, 'RICH_TEXT_MAX_IMAGE_SIZE', 512000),
         'labels': get_client_labels(),
+        'roleTemplates': template_permissions_for_client(),
     }

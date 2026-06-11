@@ -1,67 +1,85 @@
 """Ролевая модель команды с настраиваемыми правами."""
-from .role_templates import normalize_permissions, permissions_from_template
+from labels import ROLE_LABELS
+
+from models.orm_utils import attr
+from models.schema import Board, Card, Column, Team, TeamMember, TeamRole
+from .role_templates import normalize_permissions, permissions_from_template, serialize_permissions
 from .role_helpers import get_team_role_by_slug
 
 
-def get_user_role_row(conn, team_id, user_id):
-    """Возвращает строку team_roles для пользователя или None."""
-    team = conn.execute(
-        'SELECT curator_id FROM teams WHERE id = ?',
-        (team_id,)
-    ).fetchone()
+def get_user_role_row(session, team_id, user_id):
+    team = session.get(Team, team_id)
     if not team:
         return None
 
-    if team['curator_id'] == user_id:
-        curator_role = get_team_role_by_slug(conn, team_id, 'curator')
+    if team.curator_id == user_id:
+        curator_role = get_team_role_by_slug(session, team_id, 'curator')
         return curator_role or _virtual_curator_role(team_id)
 
-    member = conn.execute('''
-        SELECT tr.*
-        FROM team_members tm
-        JOIN team_roles tr ON tm.role_id = tr.id
-        WHERE tm.team_id = ? AND tm.user_id = ?
-    ''', (team_id, user_id)).fetchone()
-    if member:
-        return member
-
-    return None
+    member = (
+        session.query(TeamRole)
+        .join(TeamMember, TeamMember.role_id == TeamRole.id)
+        .filter(TeamMember.team_id == team_id, TeamMember.user_id == user_id)
+        .first()
+    )
+    return member
 
 
 def _virtual_curator_role(team_id):
-    """Fallback, если роль куратора ещё не создана."""
-    from .role_templates import serialize_permissions
     return {
         'id': None,
         'team_id': team_id,
-        'name': 'Куратор',
+        'name': ROLE_LABELS['curator'],
         'slug': 'curator',
         'description': '',
         'permissions': serialize_permissions(permissions_from_template('curator')),
-        'is_system': 1,
+        'is_system': True,
         'template_key': 'curator',
     }
 
 
-def get_user_role(conn, team_id, user_id):
-    row = get_user_role_row(conn, team_id, user_id)
-    if not row:
-        return 'none'
-    return row['slug'] if isinstance(row, dict) or hasattr(row, 'keys') else row.slug
+def _role_slug(row):
+    if isinstance(row, dict):
+        return row['slug']
+    return row.slug
 
 
-def get_user_permissions(conn, team_id, user_id):
-    row = get_user_role_row(conn, team_id, user_id)
-    if not row:
-        return normalize_permissions(None)
-    perms = row['permissions']
-    if isinstance(perms, str):
-        return normalize_permissions(perms)
+def _role_name(row):
+    if isinstance(row, dict):
+        return row['name']
+    return row.name
+
+
+def _role_id(row):
+    if isinstance(row, dict):
+        return row['id']
+    return row.id
+
+
+def _role_permissions(row):
+    if isinstance(row, dict):
+        perms = row['permissions']
+    else:
+        perms = row.permissions
     return normalize_permissions(perms)
 
 
-def get_user_role_info(conn, team_id, user_id):
-    row = get_user_role_row(conn, team_id, user_id)
+def get_user_role(session, team_id, user_id):
+    row = get_user_role_row(session, team_id, user_id)
+    if not row:
+        return 'none'
+    return _role_slug(row)
+
+
+def get_user_permissions(session, team_id, user_id):
+    row = get_user_role_row(session, team_id, user_id)
+    if not row:
+        return normalize_permissions(None)
+    return _role_permissions(row)
+
+
+def get_user_role_info(session, team_id, user_id):
+    row = get_user_role_row(session, team_id, user_id)
     if not row:
         return {
             'slug': 'none',
@@ -70,112 +88,107 @@ def get_user_role_info(conn, team_id, user_id):
             'permissions': normalize_permissions(None),
         }
     return {
-        'slug': row['slug'],
-        'name': row['name'],
-        'role_id': row['id'],
-        'permissions': get_user_permissions(conn, team_id, user_id),
+        'slug': _role_slug(row),
+        'name': _role_name(row),
+        'role_id': _role_id(row),
+        'permissions': _role_permissions(row),
     }
 
 
-def get_team_id_for_board(conn, board_id):
-    row = conn.execute(
-        'SELECT team_id FROM boards WHERE id = ?',
-        (board_id,)
-    ).fetchone()
-    return row['team_id'] if row else None
+def get_team_id_for_board(session, board_id):
+    board = session.get(Board, board_id)
+    return board.team_id if board else None
 
 
-def get_team_id_for_column(conn, column_id):
-    row = conn.execute('''
-        SELECT b.team_id FROM columns c
-        JOIN boards b ON c.board_id = b.id
-        WHERE c.id = ?
-    ''', (column_id,)).fetchone()
-    return row['team_id'] if row else None
+def get_team_id_for_column(session, column_id):
+    row = (
+        session.query(Board.team_id)
+        .join(Column, Column.board_id == Board.id)
+        .filter(Column.id == column_id)
+        .first()
+    )
+    return row[0] if row else None
 
 
-def get_team_id_for_card(conn, card_id):
-    row = conn.execute('''
-        SELECT b.team_id FROM cards c
-        JOIN columns col ON c.column_id = col.id
-        JOIN boards b ON col.board_id = b.id
-        WHERE c.id = ?
-    ''', (card_id,)).fetchone()
-    return row['team_id'] if row else None
+def get_team_id_for_card(session, card_id):
+    row = (
+        session.query(Board.team_id)
+        .join(Column, Column.board_id == Board.id)
+        .join(Card, Card.column_id == Column.id)
+        .filter(Card.id == card_id)
+        .first()
+    )
+    return row[0] if row else None
 
 
-def get_card(conn, card_id):
-    return conn.execute('SELECT * FROM cards WHERE id = ?', (card_id,)).fetchone()
+def get_card(session, card_id):
+    return session.get(Card, card_id)
 
 
-def check_access(conn, team_id, user_id):
-    perms = get_user_permissions(conn, team_id, user_id)
+def check_access(session, team_id, user_id):
+    perms = get_user_permissions(session, team_id, user_id)
     if not perms.get('view_board'):
-        return None, json_error('Access denied', 403)
-    role_info = get_user_role_info(conn, team_id, user_id)
-    return role_info, None
+        return None, ('Access denied', 403)
+    return get_user_role_info(session, team_id, user_id), None
 
 
-def json_error(message, code):
-    return message, code
+def _perms(session, team_id, user_id):
+    return get_user_permissions(session, team_id, user_id)
 
 
-def _perms(conn, team_id, user_id):
-    return get_user_permissions(conn, team_id, user_id)
+def can_view(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('view_board', False)
 
 
-def can_view(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('view_board', False)
+def can_comment(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('comment', False)
 
 
-def can_comment(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('comment', False)
+def can_create_card(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('create_card', False)
 
 
-def can_create_card(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('create_card', False)
+def can_edit_card(session, team_id, user_id, card=None):
+    return _perms(session, team_id, user_id).get('edit_card', False)
 
 
-def can_edit_card(conn, team_id, user_id, card=None):
-    return _perms(conn, team_id, user_id).get('edit_card', False)
+def can_delete_card(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('delete_card', False)
 
 
-def can_delete_card(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('delete_card', False)
-
-
-def can_move_card(conn, team_id, user_id, card):
-    perms = _perms(conn, team_id, user_id)
+def can_move_card(session, team_id, user_id, card):
+    perms = _perms(session, team_id, user_id)
     if perms.get('move_card'):
         return True
-    if perms.get('move_card_own_only') and card and card['assignee_id'] == user_id:
+    assignee_id = attr(card, 'assignee_id')
+    if perms.get('move_card_own_only') and card and assignee_id == user_id:
         return True
     return False
 
 
-def can_manage_columns(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('manage_columns', False)
+def can_manage_columns(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('manage_columns', False)
 
 
-def can_manage_board(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('manage_board', False)
+def can_manage_board(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('manage_board', False)
 
 
-def can_assign(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('assign_card', False)
+def can_assign(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('assign_card', False)
 
 
-def can_archive(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('archive_card', False)
+def can_archive(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('archive_card', False)
 
 
-def can_manage_team_members(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('manage_team_members', False)
+def can_manage_team_members(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('manage_team_members', False)
 
 
-def can_manage_roles(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('manage_roles', False)
+def can_manage_roles(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('manage_roles', False)
 
 
-def can_view_dashboard(conn, team_id, user_id):
-    return _perms(conn, team_id, user_id).get('view_dashboard', False)
+def can_view_dashboard(session, team_id, user_id):
+    return _perms(session, team_id, user_id).get('view_dashboard', False)

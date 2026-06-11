@@ -1,11 +1,30 @@
-"""Демо-данные для миграций."""
+"""Демо-данные для миграций и runtime seed ролей."""
 from sqlalchemy import text
 
 from api.role_templates import ROLE_TEMPLATES, serialize_permissions
+from models.schema import TeamRole
+
+
+def seed_default_roles_for_team(session, team_id):
+    """Создать встроенные роли команды (идемпотентно)."""
+    existing = session.query(TeamRole.id).filter_by(team_id=team_id).first()
+    if existing:
+        return
+
+    for template_key, template in ROLE_TEMPLATES.items():
+        session.add(TeamRole(
+            team_id=team_id,
+            name=template['name'],
+            slug=template_key,
+            description=template['description'],
+            permissions=serialize_permissions(template['permissions']),
+            is_system=template.get('is_system', True),
+            template_key=template_key,
+        ))
 
 
 def seed_demo_data(conn):
-    """Заполнить БД тестовыми данными (идемпотентно)."""
+    """Заполнить БД тестовыми данными (идемпотентно, для Alembic)."""
     conn.execute(text('''
         INSERT OR IGNORE INTO users (id, username, email, password_hash) VALUES
             (1, 'alice', 'alice@example.com', 'hash'),
@@ -21,8 +40,8 @@ def seed_demo_data(conn):
             (2, 'Design Team', 'UI/UX design team', NULL)
     '''))
 
-    _seed_default_roles(conn, 1)
-    _seed_default_roles(conn, 2)
+    _seed_default_roles_sql(conn, 1)
+    _seed_default_roles_sql(conn, 2)
 
     _seed_team_member(conn, 1, 1, 'developer')
     _seed_team_member(conn, 1, 2, 'developer')
@@ -80,7 +99,8 @@ def _seed_team_member(conn, team_id, user_id, role_key):
     )
 
 
-def _seed_default_roles(conn, team_id):
+def _seed_default_roles_sql(conn, team_id):
+    """Seed ролей через SQL (только для Alembic-миграций)."""
     existing = conn.execute(
         text('SELECT COUNT(*) AS cnt FROM team_roles WHERE team_id = :team_id'),
         {'team_id': team_id}

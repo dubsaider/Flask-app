@@ -1,41 +1,40 @@
 from models import User, Team
+from models.schema import User as UserModel
+from models.schema import TeamMember, TeamRole
 from .role_helpers import load_team_roles, seed_default_roles
 
 
-def load_team(conn, team_row):
-    team_obj = Team(team_row)
-    seed_default_roles(conn, team_obj.id)
+def load_team(session, team):
+    team_obj = Team(team)
+    seed_default_roles(session, team_obj.id)
 
-    members = conn.execute('''
-        SELECT u.*, tm.role_id,
-               tr.slug AS role_slug, tr.name AS role_name
-        FROM users u
-        JOIN team_members tm ON u.id = tm.user_id
-        JOIN team_roles tr ON tm.role_id = tr.id
-        WHERE tm.team_id = ?
-        ORDER BY u.username
-    ''', (team_obj.id,)).fetchall()
+    members = (
+        session.query(UserModel, TeamMember.role_id, TeamRole.slug, TeamRole.name)
+        .join(TeamMember, UserModel.id == TeamMember.user_id)
+        .join(TeamRole, TeamMember.role_id == TeamRole.id)
+        .filter(TeamMember.team_id == team_obj.id)
+        .order_by(UserModel.username)
+        .all()
+    )
 
     team_obj.members = []
-    for member_row in members:
-        user = User(member_row)
-        user.role_id = member_row['role_id']
-        user.role = member_row['role_slug']
-        user.role_name = member_row['role_name']
+    for user_model, role_id, role_slug, role_name in members:
+        user = User(user_model)
+        user.role_id = role_id
+        user.role = role_slug
+        user.role_name = role_name
         team_obj.members.append(user)
 
     if team_obj.curator_id:
-        curator = conn.execute(
-            'SELECT * FROM users WHERE id = ?',
-            (team_obj.curator_id,)
-        ).fetchone()
+        curator = session.get(UserModel, team_obj.curator_id)
         if curator:
             team_obj.curator = User(curator)
 
-    team_obj.roles = load_team_roles(conn, team_obj.id)
+    team_obj.roles = load_team_roles(session, team_obj.id)
     return team_obj
 
 
-def user_has_team_access(conn, team_row, user_id):
+def user_has_team_access(session, team, user_id):
     from .permissions import can_view
-    return can_view(conn, team_row['id'], user_id)
+    team_id = team.id if hasattr(team, 'id') else team['id']
+    return can_view(session, team_id, user_id)

@@ -1,16 +1,14 @@
 from flask import jsonify, request
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden, not_found
 from models import Notification
-
-
-def _forbidden(message):
-    return jsonify({'error': message}), 403
+from models.schema import Notification as NotificationModel
 
 
 def _check_user_access(request_user_id, target_user_id):
     if not request_user_id or int(request_user_id) != int(target_user_id):
-        return _forbidden('Access denied')
+        return forbidden('Access denied')
     return None
 
 
@@ -21,14 +19,14 @@ def get_user_notifications(user_id):
     if error:
         return error
 
-    with get_db_context() as conn:
-        rows = conn.execute('''
-            SELECT * FROM notifications
-            WHERE user_id = ?
-            ORDER BY created_at DESC, id DESC
-            LIMIT 50
-        ''', (user_id,)).fetchall()
-
+    with session_scope() as session:
+        rows = (
+            session.query(NotificationModel)
+            .filter_by(user_id=user_id)
+            .order_by(NotificationModel.created_at.desc(), NotificationModel.id.desc())
+            .limit(50)
+            .all()
+        )
         return jsonify([Notification(row).to_dict() for row in rows])
 
 
@@ -39,12 +37,12 @@ def get_unread_count(user_id):
     if error:
         return error
 
-    with get_db_context() as conn:
-        count = conn.execute('''
-            SELECT COUNT(*) AS cnt FROM notifications
-            WHERE user_id = ? AND is_read = 0
-        ''', (user_id,)).fetchone()['cnt']
-
+    with session_scope() as session:
+        count = (
+            session.query(NotificationModel)
+            .filter_by(user_id=user_id, is_read=False)
+            .count()
+        )
         return jsonify({'count': count})
 
 
@@ -55,11 +53,10 @@ def mark_all_read(user_id):
     if error:
         return error
 
-    with get_db_context() as conn:
-        conn.execute(
-            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
-            (user_id,)
-        )
+    with session_scope() as session:
+        session.query(NotificationModel).filter_by(
+            user_id=user_id, is_read=False
+        ).update({NotificationModel.is_read: True}, synchronize_session=False)
         return jsonify({'message': 'All notifications marked as read'})
 
 
@@ -68,25 +65,15 @@ def mark_notification_read(notification_id):
     data = request.json or {}
     user_id = data.get('user_id')
     if not user_id:
-        return _forbidden('user_id is required')
+        return forbidden('user_id is required')
 
-    with get_db_context() as conn:
-        row = conn.execute(
-            'SELECT * FROM notifications WHERE id = ?',
-            (notification_id,)
-        ).fetchone()
+    with session_scope() as session:
+        row = session.get(NotificationModel, notification_id)
 
         if not row:
-            return jsonify({'error': 'Notification not found'}), 404
-        if row['user_id'] != user_id:
-            return _forbidden('Access denied')
+            return not_found('Notification not found')
+        if row.user_id != user_id:
+            return forbidden('Access denied')
 
-        conn.execute(
-            'UPDATE notifications SET is_read = 1 WHERE id = ?',
-            (notification_id,)
-        )
-        updated = conn.execute(
-            'SELECT * FROM notifications WHERE id = ?',
-            (notification_id,)
-        ).fetchone()
-        return jsonify(Notification(updated).to_dict())
+        row.is_read = True
+        return jsonify(Notification(row).to_dict())

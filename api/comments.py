@@ -1,14 +1,12 @@
 from flask import jsonify, request
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden, not_found, access_denied
 from models import Comment, User
+from models.schema import Comment as CommentModel, User as UserModel
 from . import permissions as perm
 from utils.html_sanitize import sanitize_html
 from .notify_helpers import notify_comment
-
-
-def _forbidden(message):
-    return jsonify({'error': message}), 403
 
 
 @api_bp.route('/cards/<int:card_id>/comments', methods=['GET', 'POST'])
@@ -17,42 +15,44 @@ def comments_handler(card_id):
         data = request.json
         user_id = data.get('user_id')
         if not user_id:
-            return _forbidden('user_id is required')
+            return forbidden('user_id is required')
 
-        with get_db_context() as conn:
-            card = perm.get_card(conn, card_id)
+        with session_scope() as session:
+            card = perm.get_card(session, card_id)
             if not card:
-                return jsonify({'error': 'Card not found'}), 404
+                return not_found('Card not found')
 
-            team_id = perm.get_team_id_for_card(conn, card_id)
-            _, error = perm.check_access(conn, team_id, user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            team_id = perm.get_team_id_for_card(session, card_id)
+            _, error = perm.check_access(session, team_id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_comment(conn, team_id, user_id):
-                return _forbidden('You cannot comment on this card')
+            if not perm.can_comment(session, team_id, user_id):
+                return forbidden('You cannot comment on this card')
 
-            cursor = conn.execute(
-                'INSERT INTO comments (text, card_id, user_id) VALUES (?, ?, ?)',
-                (sanitize_html(data['text']), card_id, user_id)
+            comment = CommentModel(
+                text=sanitize_html(data['text']),
+                card_id=card_id,
+                user_id=user_id,
             )
-            notify_comment(conn, card_id, user_id)
-            comment = conn.execute('SELECT * FROM comments WHERE id = ?', (cursor.lastrowid,)).fetchone()
+            session.add(comment)
+            session.flush()
+            notify_comment(session, card_id, user_id)
             return jsonify(Comment(comment).to_dict()), 201
 
-    with get_db_context() as conn:
-        comments = conn.execute(
-            'SELECT * FROM comments WHERE card_id = ? ORDER BY created_at',
-            (card_id,)
-        ).fetchall()
+    with session_scope() as session:
+        comments = (
+            session.query(CommentModel)
+            .filter_by(card_id=card_id)
+            .order_by(CommentModel.created_at)
+            .all()
+        )
 
         result = []
-        for comment_row in comments:
-            comment = Comment(comment_row)
-            author = conn.execute(
-                'SELECT * FROM users WHERE id = ?',
-                (comment.user_id,)
-            ).fetchone()
+        for comment_model in comments:
+            comment = Comment(comment_model)
+            author = session.get(UserModel, comment.user_id)
             if author:
                 comment.author = User(author)
             result.append(comment.to_dict())

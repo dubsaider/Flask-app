@@ -1,143 +1,149 @@
 from flask import jsonify
 from datetime import datetime
+from sqlalchemy import func
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden
 from models import User
+from models.schema import (
+    Card as CardModel,
+    Column as ColumnModel,
+    Board as BoardModel,
+    Team as TeamModel,
+    TeamMember,
+    TeamRole,
+    User as UserModel,
+    Comment as CommentModel,
+)
 from .helpers import user_has_team_access
 from . import permissions as perm
 from .card_helpers import workflow_fields, is_in_progress
 
 
-def _card_context(conn, card_row):
+def _card_context(session, card, column_title, column_is_done, board_id, board_title, team_id, team_name):
     assignee = None
-    if card_row['assignee_id']:
-        user = conn.execute(
-            'SELECT * FROM users WHERE id = ?',
-            (card_row['assignee_id'],)
-        ).fetchone()
+    if card.assignee_id:
+        user = session.get(UserModel, card.assignee_id)
         if user:
             assignee = User(user).to_dict()
 
-    comments_count = conn.execute(
-        'SELECT COUNT(*) as cnt FROM comments WHERE card_id = ?',
-        (card_row['id'],)
-    ).fetchone()['cnt']
+    comments_count = session.query(func.count(CommentModel.id)).filter_by(card_id=card.id).scalar() or 0
+    wf = workflow_fields(card.status, bool(column_is_done))
 
-    column_is_done = bool(card_row['column_is_done']) if 'column_is_done' in card_row.keys() else False
-    wf = workflow_fields(card_row['status'], column_is_done)
+    deadline = card.deadline
+    created = card.created_at
+    updated = card.updated_at
 
     return {
-        'id': card_row['id'],
-        'title': card_row['title'],
-        'description': card_row['description'],
-        'position': card_row['position'],
-        'column_id': card_row['column_id'],
-        'column_title': card_row['column_title'],
-        'column_is_done': column_is_done,
-        'board_id': card_row['board_id'],
-        'board_title': card_row['board_title'],
-        'team_id': card_row['team_id'],
-        'team_name': card_row['team_name'],
-        'assignee_id': card_row['assignee_id'],
+        'id': card.id,
+        'title': card.title,
+        'description': card.description,
+        'position': card.position,
+        'column_id': card.column_id,
+        'column_title': column_title,
+        'column_is_done': bool(column_is_done),
+        'board_id': board_id,
+        'board_title': board_title,
+        'team_id': team_id,
+        'team_name': team_name,
+        'assignee_id': card.assignee_id,
         'assignee': assignee,
-        'created_by': card_row['created_by'],
-        'priority': card_row['priority'],
+        'created_by': card.created_by,
+        'priority': card.priority,
         'status': wf['status'],
         'workflow_status': wf['workflow_status'],
         'is_completed': wf['is_completed'],
-        'deadline': card_row['deadline'],
-        'created_at': card_row['created_at'],
-        'updated_at': card_row['updated_at'],
+        'deadline': deadline.isoformat() if hasattr(deadline, 'isoformat') else deadline,
+        'created_at': created.isoformat() if hasattr(created, 'isoformat') else created,
+        'updated_at': updated.isoformat() if hasattr(updated, 'isoformat') else updated,
         'comments_count': comments_count,
     }
 
 
-def _is_overdue(deadline_str, status, column_is_done):
+def _is_overdue(deadline, status, column_is_done):
     if not is_in_progress(status, column_is_done):
         return False
-    if not deadline_str:
+    if not deadline:
         return False
     try:
-        deadline = datetime.fromisoformat(deadline_str.replace(' ', 'T'))
-        return deadline < datetime.now()
+        if hasattr(deadline, 'isoformat'):
+            deadline_dt = deadline
+        else:
+            deadline_dt = datetime.fromisoformat(str(deadline).replace(' ', 'T'))
+        return deadline_dt < datetime.now()
     except ValueError:
         return False
+
+
+def _query_team_cards(session, team_ids, assignee_id=None):
+    query = (
+        session.query(
+            CardModel,
+            ColumnModel.title,
+            ColumnModel.is_done,
+            ColumnModel.board_id,
+            BoardModel.title,
+            BoardModel.team_id,
+            TeamModel.name,
+        )
+        .join(ColumnModel, CardModel.column_id == ColumnModel.id)
+        .join(BoardModel, ColumnModel.board_id == BoardModel.id)
+        .join(TeamModel, BoardModel.team_id == TeamModel.id)
+        .filter(BoardModel.team_id.in_(team_ids))
+    )
+    if assignee_id is not None:
+        query = query.filter(CardModel.assignee_id == assignee_id)
+    return query.order_by(BoardModel.title, ColumnModel.position, CardModel.position)
 
 
 @api_bp.route('/users/<int:user_id>/tasks', methods=['GET'])
 def get_user_tasks(user_id):
     """Задачи пользователя (назначенные ему) по всем доступным доскам"""
-    with get_db_context() as conn:
-        teams = conn.execute('SELECT * FROM teams ORDER BY name').fetchall()
-        team_ids = [
-            team['id'] for team in teams
-            if user_has_team_access(conn, team, user_id)
-        ]
+    with session_scope() as session:
+        teams = session.query(TeamModel).order_by(TeamModel.name).all()
+        team_ids = [team.id for team in teams if user_has_team_access(session, team, user_id)]
 
         if not team_ids:
             return jsonify([])
 
-        placeholders = ','.join('?' * len(team_ids))
-        rows = conn.execute(f'''
-            SELECT c.*,
-                   col.title AS column_title,
-                   col.is_done AS column_is_done,
-                   col.board_id,
-                   b.title AS board_title,
-                   b.team_id,
-                   t.name AS team_name
-            FROM cards c
-            JOIN columns col ON c.column_id = col.id
-            JOIN boards b ON col.board_id = b.id
-            JOIN teams t ON b.team_id = t.id
-            WHERE b.team_id IN ({placeholders}) AND c.assignee_id = ?
-            ORDER BY b.title, col.position, c.position
-        ''', (*team_ids, user_id)).fetchall()
-
-        return jsonify([_card_context(conn, row) for row in rows])
+        rows = _query_team_cards(session, team_ids, assignee_id=user_id).all()
+        return jsonify([
+            _card_context(session, card, col_title, col_done, board_id, board_title, team_id, team_name)
+            for card, col_title, col_done, board_id, board_title, team_id, team_name in rows
+        ])
 
 
 @api_bp.route('/users/<int:user_id>/leader-dashboard', methods=['GET'])
 def get_leader_dashboard(user_id):
     """Дашборд для руководителя — статистика по командам"""
-    with get_db_context() as conn:
-        leader_teams = conn.execute('''
-            SELECT DISTINCT t.*
-            FROM teams t
-            JOIN team_members tm ON t.id = tm.team_id
-            JOIN team_roles tr ON tm.role_id = tr.id
-            WHERE tm.user_id = ?
-            ORDER BY t.name
-        ''', (user_id,)).fetchall()
+    with session_scope() as session:
+        leader_teams = (
+            session.query(TeamModel)
+            .join(TeamMember, TeamModel.id == TeamMember.team_id)
+            .join(TeamRole, TeamMember.role_id == TeamRole.id)
+            .filter(TeamMember.user_id == user_id)
+            .distinct()
+            .order_by(TeamModel.name)
+            .all()
+        )
 
         accessible_teams = [
             team for team in leader_teams
-            if perm.can_view_dashboard(conn, team['id'], user_id)
+            if perm.can_view_dashboard(session, team.id, user_id)
         ]
 
         if not accessible_teams:
-            return jsonify({'error': 'Dashboard access denied'}), 403
+            return forbidden('Dashboard access denied')
 
         result = []
         for team in accessible_teams:
-            team_id = team['id']
+            team_id = team.id
 
-            rows = conn.execute('''
-                SELECT c.*,
-                       col.title AS column_title,
-                       col.is_done AS column_is_done,
-                       col.board_id,
-                       b.title AS board_title,
-                       b.team_id,
-                       t.name AS team_name
-                FROM cards c
-                JOIN columns col ON c.column_id = col.id
-                JOIN boards b ON col.board_id = b.id
-                JOIN teams t ON b.team_id = t.id
-                WHERE b.team_id = ?
-            ''', (team_id,)).fetchall()
-
-            card_items = [_card_context(conn, row) for row in rows]
+            rows = _query_team_cards(session, [team_id]).all()
+            card_items = [
+                _card_context(session, card, col_title, col_done, board_id, board_title, tid, team_name)
+                for card, col_title, col_done, board_id, board_title, tid, team_name in rows
+            ]
 
             by_priority = {'low': 0, 'medium': 0, 'high': 0, 'critical': 0}
             by_workflow = {'active': 0, 'completed': 0, 'archived': 0}
@@ -175,24 +181,21 @@ def get_leader_dashboard(user_id):
                 if _is_overdue(card['deadline'], card['status'], card['column_is_done']):
                     overdue.append(card)
 
-            members = conn.execute('''
-                SELECT u.id, u.username, tr.slug AS role, tr.name AS role_name
-                FROM users u
-                JOIN team_members tm ON u.id = tm.user_id
-                JOIN team_roles tr ON tm.role_id = tr.id
-                WHERE tm.team_id = ?
-            ''', (team_id,)).fetchall()
+            members = (
+                session.query(UserModel.id, UserModel.username, TeamRole.slug, TeamRole.name)
+                .join(TeamMember, UserModel.id == TeamMember.user_id)
+                .join(TeamRole, TeamMember.role_id == TeamRole.id)
+                .filter(TeamMember.team_id == team_id)
+                .all()
+            )
 
-            boards = conn.execute(
-                'SELECT id, title FROM boards WHERE team_id = ?',
-                (team_id,)
-            ).fetchall()
+            boards = session.query(BoardModel.id, BoardModel.title).filter_by(team_id=team_id).all()
 
             result.append({
                 'team': {
                     'id': team_id,
-                    'name': team['name'],
-                    'description': team['description'],
+                    'name': team.name,
+                    'description': team.description,
                 },
                 'summary': {
                     'total': len(card_items),
@@ -214,10 +217,10 @@ def get_leader_dashboard(user_id):
                     reverse=True
                 ),
                 'members': [
-                    {'id': m['id'], 'username': m['username'], 'role': m['role']}
+                    {'id': m[0], 'username': m[1], 'role': m[2]}
                     for m in members
                 ],
-                'boards': [{'id': b['id'], 'title': b['title']} for b in boards],
+                'boards': [{'id': b[0], 'title': b[1]} for b in boards],
                 'overdue_tasks': overdue[:10],
                 'unassigned_tasks': unassigned[:10],
             })

@@ -1,12 +1,10 @@
 from flask import jsonify, request
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden, not_found, access_denied
 from models import Board
+from models.schema import Board as BoardModel, Column as ColumnModel, Team as TeamModel
 from . import permissions as perm
-
-
-def _forbidden(message):
-    return jsonify({'error': message}), 403
 
 
 @api_bp.route('/boards', methods=['GET', 'POST'])
@@ -15,89 +13,84 @@ def boards_handler():
         data = request.json
         user_id = data.get('user_id')
         if not user_id:
-            return _forbidden('user_id is required')
+            return forbidden('user_id is required')
 
-        with get_db_context() as conn:
-            team = conn.execute('SELECT * FROM teams WHERE id = ?', (data['team_id'],)).fetchone()
+        with session_scope() as session:
+            team = session.get(TeamModel, data['team_id'])
             if not team:
-                return jsonify({'error': 'Team not found'}), 404
+                return not_found('Team not found')
 
-            _, error = perm.check_access(conn, team['id'], user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            _, error = perm.check_access(session, team.id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_manage_board(conn, team['id'], user_id):
-                return _forbidden('You cannot create boards')
+            if not perm.can_manage_board(session, team.id, user_id):
+                return forbidden('You cannot create boards')
 
-            cursor = conn.execute(
-                'INSERT INTO boards (title, description, team_id) VALUES (?, ?, ?)',
-                (data['title'], data.get('description', ''), data['team_id'])
+            board = BoardModel(
+                title=data['title'],
+                description=data.get('description', ''),
+                team_id=data['team_id'],
             )
-            board_id = cursor.lastrowid
+            session.add(board)
+            session.flush()
 
             default_columns = ['To Do', 'In Progress', 'Done']
             for i, col_title in enumerate(default_columns):
-                conn.execute(
-                    'INSERT INTO columns (title, position, board_id) VALUES (?, ?, ?)',
-                    (col_title, i, board_id)
-                )
+                session.add(ColumnModel(title=col_title, position=i, board_id=board.id))
 
-            board = conn.execute('SELECT * FROM boards WHERE id = ?', (board_id,)).fetchone()
             return jsonify(Board(board).to_dict()), 201
 
-    with get_db_context() as conn:
-        boards = conn.execute('SELECT * FROM boards').fetchall()
+    with session_scope() as session:
+        boards = session.query(BoardModel).all()
         return jsonify([Board(board).to_dict() for board in boards])
 
 
 @api_bp.route('/boards/<int:board_id>', methods=['GET', 'PUT', 'DELETE'])
 def board_handler(board_id):
-    with get_db_context() as conn:
+    with session_scope() as session:
+        board = session.get(BoardModel, board_id)
+
         if request.method == 'PUT':
             data = request.json
             user_id = data.get('user_id')
             if not user_id:
-                return _forbidden('user_id is required')
-
-            board = conn.execute('SELECT * FROM boards WHERE id = ?', (board_id,)).fetchone()
+                return forbidden('user_id is required')
             if not board:
-                return jsonify({'error': 'Board not found'}), 404
+                return not_found('Board not found')
 
-            _, error = perm.check_access(conn, board['team_id'], user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            _, error = perm.check_access(session, board.team_id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_manage_board(conn, board['team_id'], user_id):
-                return _forbidden('You cannot edit boards')
+            if not perm.can_manage_board(session, board.team_id, user_id):
+                return forbidden('You cannot edit boards')
 
-            conn.execute(
-                'UPDATE boards SET title = ?, description = ? WHERE id = ?',
-                (data['title'], data.get('description', ''), board_id)
-            )
-            board = conn.execute('SELECT * FROM boards WHERE id = ?', (board_id,)).fetchone()
+            board.title = data['title']
+            board.description = data.get('description', '')
             return jsonify(Board(board).to_dict())
 
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             data = request.json or {}
             user_id = data.get('user_id')
             if not user_id:
-                return _forbidden('user_id is required')
-
-            board = conn.execute('SELECT * FROM boards WHERE id = ?', (board_id,)).fetchone()
+                return forbidden('user_id is required')
             if not board:
-                return jsonify({'error': 'Board not found'}), 404
+                return not_found('Board not found')
 
-            _, error = perm.check_access(conn, board['team_id'], user_id)
-            if error:
-                return jsonify({'error': error[0]}), error[1]
+            _, error = perm.check_access(session, board.team_id, user_id)
+            denied = access_denied(error)
+            if denied:
+                return denied
 
-            if not perm.can_manage_board(conn, board['team_id'], user_id):
-                return _forbidden('You cannot delete boards')
+            if not perm.can_manage_board(session, board.team_id, user_id):
+                return forbidden('You cannot delete boards')
 
-            conn.execute('DELETE FROM boards WHERE id = ?', (board_id,))
+            session.delete(board)
             return '', 204
 
-        board = conn.execute('SELECT * FROM boards WHERE id = ?', (board_id,)).fetchone()
         if board:
             return jsonify(Board(board).to_dict())
-        return jsonify({'error': 'Board not found'}), 404
+        return not_found('Board not found')

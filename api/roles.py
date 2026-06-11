@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from .init import api_bp
-from database import get_db_context
+from .db import session_scope
+from .http_helpers import forbidden, not_found, bad_request
 from . import permissions as perm
 from .role_templates import PERMISSION_LABELS, ROLE_TEMPLATES, normalize_permissions, serialize_permissions
 from .role_helpers import (
@@ -11,10 +12,7 @@ from .role_helpers import (
     count_members_with_role,
     seed_default_roles,
 )
-
-
-def _forbidden(message):
-    return jsonify({'error': message}), 403
+from models.schema import Team as TeamModel, TeamRole
 
 
 @api_bp.route('/role-templates', methods=['GET'])
@@ -28,27 +26,27 @@ def get_role_templates():
 
 @api_bp.route('/teams/<int:team_id>/roles', methods=['GET', 'POST'])
 def team_roles_handler(team_id):
-    with get_db_context() as conn:
-        team = conn.execute('SELECT * FROM teams WHERE id = ?', (team_id,)).fetchone()
+    with session_scope() as session:
+        team = session.get(TeamModel, team_id)
         if not team:
-            return jsonify({'error': 'Team not found'}), 404
+            return not_found('Team not found')
 
-        seed_default_roles(conn, team_id)
+        seed_default_roles(session, team_id)
 
         if request.method == 'GET':
             user_id = request.args.get('user_id', type=int)
             if not user_id:
-                return _forbidden('user_id is required')
-            if not perm.can_view(conn, team_id, user_id):
-                return _forbidden('Access denied')
-            return jsonify(load_team_roles(conn, team_id))
+                return forbidden('user_id is required')
+            if not perm.can_view(session, team_id, user_id):
+                return forbidden('Access denied')
+            return jsonify(load_team_roles(session, team_id))
 
         data = request.get_json(silent=True) or {}
         user_id = data.get('user_id')
         if not user_id:
-            return _forbidden('user_id is required')
-        if not perm.can_manage_roles(conn, team_id, user_id):
-            return _forbidden('Only users with role management permission can create roles')
+            return forbidden('user_id is required')
+        if not perm.can_manage_roles(session, team_id, user_id):
+            return forbidden('Only users with role management permission can create roles')
 
         template_key = data.get('template_key')
         if template_key and template_key in ROLE_TEMPLATES:
@@ -59,32 +57,28 @@ def team_roles_handler(team_id):
             if data.get('permissions'):
                 permissions = normalize_permissions(data['permissions'])
             description = data.get('description') or template['description']
-            is_system = 0
+            is_system = False
         else:
             name = (data.get('name') or '').strip()
             if not name:
-                return jsonify({'error': 'Role name is required'}), 400
+                return bad_request('Role name is required')
             base_slug = data.get('slug') or name.lower().replace(' ', '-')
             permissions = normalize_permissions(data.get('permissions'))
             description = data.get('description', '')
-            is_system = 0
+            is_system = False
 
-        slug = unique_slug(conn, team_id, base_slug)
-        cursor = conn.execute(
-            '''INSERT INTO team_roles
-               (team_id, name, slug, description, permissions, is_system, template_key)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (
-                team_id,
-                name,
-                slug,
-                description,
-                serialize_permissions(permissions),
-                is_system,
-                template_key,
-            )
+        slug = unique_slug(session, team_id, base_slug)
+        role = TeamRole(
+            team_id=team_id,
+            name=name,
+            slug=slug,
+            description=description,
+            permissions=serialize_permissions(permissions),
+            is_system=is_system,
+            template_key=template_key,
         )
-        role = get_team_role_by_id(conn, team_id, cursor.lastrowid)
+        session.add(role)
+        session.flush()
         return jsonify(role_row_to_dict(role)), 201
 
 
@@ -93,39 +87,31 @@ def team_role_handler(team_id, role_id):
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id')
 
-    with get_db_context() as conn:
-        role = get_team_role_by_id(conn, team_id, role_id)
+    with session_scope() as session:
+        role = get_team_role_by_id(session, team_id, role_id)
         if not role:
-            return jsonify({'error': 'Role not found'}), 404
+            return not_found('Role not found')
 
         if not user_id:
-            return _forbidden('user_id is required')
-        if not perm.can_manage_roles(conn, team_id, user_id):
-            return _forbidden('Only users with role management permission can modify roles')
+            return forbidden('user_id is required')
+        if not perm.can_manage_roles(session, team_id, user_id):
+            return forbidden('Only users with role management permission can modify roles')
 
         if request.method == 'DELETE':
-            if role['is_system']:
-                return jsonify({'error': 'System roles cannot be deleted'}), 400
-            members_count = count_members_with_role(conn, role_id)
+            if role.is_system:
+                return bad_request('System roles cannot be deleted')
+            members_count = count_members_with_role(session, role_id)
             if members_count:
-                return jsonify({'error': 'Role is assigned to team members'}), 400
-            conn.execute('DELETE FROM team_roles WHERE id = ? AND team_id = ?', (role_id, team_id))
+                return bad_request('Role is assigned to team members')
+            session.delete(role)
             return '', 204
 
-        if role['template_key'] == 'leader' and data.get('permissions'):
+        if role.template_key == 'leader' and data.get('permissions'):
             leader_perms = normalize_permissions(data['permissions'])
             if not leader_perms.get('manage_roles'):
-                return jsonify({'error': 'Leader role must keep role management permission'}), 400
+                return bad_request('Leader role must keep role management permission')
 
-        name = data.get('name', role['name']).strip()
-        description = data.get('description', role['description'])
-        permissions = normalize_permissions(data.get('permissions', role['permissions']))
-
-        conn.execute(
-            '''UPDATE team_roles
-               SET name = ?, description = ?, permissions = ?
-               WHERE id = ? AND team_id = ?''',
-            (name, description, serialize_permissions(permissions), role_id, team_id)
-        )
-        updated = get_team_role_by_id(conn, team_id, role_id)
-        return jsonify(role_row_to_dict(updated))
+        role.name = data.get('name', role.name).strip()
+        role.description = data.get('description', role.description)
+        role.permissions = serialize_permissions(data.get('permissions', role.permissions))
+        return jsonify(role_row_to_dict(role))
