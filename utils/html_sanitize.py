@@ -17,6 +17,20 @@ ALLOWED_ATTRS = {
 }
 
 MAX_HTML_LENGTH = 50000
+MAX_IMAGE_DATA_URL_LENGTH = 700000
+
+
+def _limits():
+    try:
+        from flask import current_app
+        return (
+            current_app.config.get('MAX_HTML_LENGTH', MAX_HTML_LENGTH),
+            current_app.config.get('MAX_IMAGE_DATA_URL_LENGTH', MAX_IMAGE_DATA_URL_LENGTH),
+        )
+    except RuntimeError:
+        from config import get_config
+        cfg = get_config()
+        return cfg.MAX_HTML_LENGTH, cfg.MAX_IMAGE_DATA_URL_LENGTH
 
 
 def _clean_href(value):
@@ -26,7 +40,8 @@ def _clean_href(value):
     if value.startswith(('http://', 'https://', 'mailto:', '/', '#')):
         return value
     if value.startswith('data:image/'):
-        if len(value) > 700000:
+        _, max_len = _limits()
+        if len(value) > max_len:
             return None
         return value
     return None
@@ -39,7 +54,8 @@ def _clean_src(value):
     if value.startswith(('http://', 'https://', '/')):
         return value
     if value.startswith('data:image/'):
-        if len(value) > 700000:
+        _, max_len = _limits()
+        if len(value) > max_len:
             return None
         return value
     return None
@@ -114,8 +130,9 @@ def sanitize_html(html):
     html = str(html).strip()
     if not html:
         return ''
-    if len(html) > MAX_HTML_LENGTH:
-        html = html[:MAX_HTML_LENGTH]
+    max_html_len, _ = _limits()
+    if len(html) > max_html_len:
+        html = html[:max_html_len]
 
     if '<' not in html:
         return plain_text_to_html(html)

@@ -11,3 +11,4 @@ from . import comments
 from . import tasks
 from . import notifications
 from . import roles
+from . import config as app_config

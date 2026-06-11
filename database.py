@@ -1,21 +1,38 @@
 import sqlite3
 from contextlib import contextmanager
+
 from api.role_helpers import seed_default_roles
 
-DATABASE = 'kanban.db'
+_app_config = None
+
+
+def init_app(app):
+    """Привязать конфиг Flask к модулю БД."""
+    global _app_config
+    _app_config = app.config
+
+
+def _cfg(key, default=None):
+    if _app_config is not None:
+        return _app_config.get(key, default)
+    from config import get_config
+    return getattr(get_config(), key, default)
+
 
 def get_db():
-    """Создает подключение к базе данных"""
-    conn = sqlite3.connect(DATABASE)
+    """Создает подключение к базе данных."""
+    conn = sqlite3.connect(_cfg('DATABASE_PATH'))
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn
+
 
 def _table_columns(conn, table_name):
     return {row[1] for row in conn.execute(f'PRAGMA table_info({table_name})').fetchall()}
 
+
 def migrate_db(conn):
-    """Миграции для существующей базы"""
+    """Миграции для существующей базы."""
     column_fields = _table_columns(conn, 'columns')
     if 'is_done' not in column_fields:
         conn.execute('ALTER TABLE columns ADD COLUMN is_done INTEGER NOT NULL DEFAULT 0')
@@ -121,17 +138,20 @@ def _seed_default_members(conn):
                 (team_id, user_id, role_row['id'])
             )
 
+
 def init_db():
-    """Инициализация базы данных из schema.sql"""
+    """Инициализация базы данных из schema.sql."""
+    schema_path = _cfg('SCHEMA_PATH')
     with get_db() as conn:
-        with open('schema.sql', 'r', encoding='utf-8') as f:
+        with open(schema_path, 'r', encoding='utf-8') as f:
             conn.executescript(f.read())
         migrate_db(conn)
         conn.commit()
 
+
 @contextmanager
 def get_db_context():
-    """Контекстный менеджер для работы с БД"""
+    """Контекстный менеджер для работы с БД."""
     conn = get_db()
     try:
         yield conn

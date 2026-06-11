@@ -1,6 +1,6 @@
 const RichText = {
     editors: {},
-    maxImageSize: 512000,
+    maxImageSize: window.APP_CONFIG?.richTextMaxImageSize ?? 512000,
 
     cardToolbar: [
         [{ header: [1, 2, 3, false] }],
