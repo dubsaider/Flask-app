@@ -36,7 +36,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
 
     DATABASE_PATH = os.environ.get('DATABASE_PATH', str(BASE_DIR / 'kanban.db'))
-    SCHEMA_PATH = os.environ.get('SCHEMA_PATH', str(BASE_DIR / 'schema.sql'))
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + Path(DATABASE_PATH).resolve().as_posix()
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    AUTO_MIGRATE = _env_bool('AUTO_MIGRATE', True)
 
     DEBUG = _env_bool('FLASK_DEBUG', True)
     HOST = os.environ.get('FLASK_HOST', '127.0.0.1')

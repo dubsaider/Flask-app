@@ -1,14 +1,15 @@
 from datetime import datetime
 
+
 class User:
-    """Модель пользователя"""
+    """DTO пользователя из строки БД."""
     def __init__(self, row):
         self.id = row['id']
         self.username = row['username']
         self.email = row['email']
         self.created_at = row['created_at']
         self.role = row['role'] if 'role' in row.keys() else None
-    
+
     def to_dict(self):
         result = {
             'id': self.id,
@@ -24,8 +25,9 @@ class User:
             result['role_name'] = self.role_name
         return result
 
+
 class Team:
-    """Модель команды"""
+    """DTO команды."""
     def __init__(self, row):
         self.id = row['id']
         self.name = row['name']
@@ -35,7 +37,7 @@ class Team:
         self.members = []
         self.curator = None
         self.roles = []
-    
+
     def to_dict(self):
         result = {
             'id': self.id,
@@ -50,15 +52,16 @@ class Team:
             result['curator'] = self.curator.to_dict()
         return result
 
+
 class Board:
-    """Модель доски"""
+    """DTO доски."""
     def __init__(self, row):
         self.id = row['id']
         self.title = row['title']
         self.description = row['description']
         self.team_id = row['team_id']
         self.created_at = row['created_at']
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -68,8 +71,9 @@ class Board:
             'created_at': self.created_at
         }
 
+
 class Column:
-    """Модель колонки"""
+    """DTO колонки."""
     def __init__(self, row):
         self.id = row['id']
         self.title = row['title']
@@ -78,7 +82,7 @@ class Column:
         self.is_done = bool(row['is_done']) if 'is_done' in row.keys() else False
         self.created_at = row['created_at']
         self.cards = []
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -90,8 +94,9 @@ class Column:
             'cards': [c.to_dict(column_is_done=self.is_done) for c in self.cards]
         }
 
+
 class Card:
-    """Модель карточки/задачи"""
+    """DTO карточки."""
     def __init__(self, row):
         self.id = row['id']
         self.title = row['title']
@@ -108,7 +113,7 @@ class Card:
         self.assignee = None
         self.creator = None
         self.comments = []
-    
+
     def to_dict(self, column_is_done=False):
         from api.card_helpers import workflow_fields
         wf = workflow_fields(self.status, column_is_done)
@@ -135,8 +140,9 @@ class Card:
             result['creator'] = self.creator.to_dict()
         return result
 
+
 class Comment:
-    """Модель комментария"""
+    """DTO комментария."""
     def __init__(self, row):
         self.id = row['id']
         self.text = row['text']
@@ -144,7 +150,7 @@ class Comment:
         self.user_id = row['user_id']
         self.created_at = row['created_at']
         self.author = None
-    
+
     def to_dict(self):
         result = {
             'id': self.id,
@@ -159,7 +165,7 @@ class Comment:
 
 
 class Notification:
-    """In-app уведомление"""
+    """DTO уведомления."""
     def __init__(self, row):
         self.id = row['id']
         self.user_id = row['user_id']
