@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ labels.app.name }}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-core.css') }}">
+    {% block page_css %}{% endblock %}
+    {% block vendor_css %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
 <body class="app-body">
@@ -16,16 +17,13 @@
             <div class="app-main__view">
                 {% block content %}{% endblock %}
             </div>
-            {% include 'components/card_panel.html' %}
+            {% block card_panel %}{% endblock %}
         </div>
     </div>
 
-    {% include 'components/board_modal.html' %}
-    {% include 'components/column_modal.html' %}
+    {% block board_modals %}{% endblock %}
     {% include 'components/html_templates.html' %}
 
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <script>window.APP_CONFIG = {{ client_config | tojson }};</script>
     <script src="{{ url_for('static', filename='js/locale.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dom.js') }}"></script>
@@ -33,15 +31,10 @@
     <script src="{{ url_for('static', filename='js/permissions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/richText.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/cards.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/columns.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/comments.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dragDrop.js') }}"></script>
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/board.js') }}"></script>
+    {% block vendor_js %}{% endblock %}
+    {% block page_js %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -2,6 +2,10 @@
 
 {% block title %}{{ labels.dashboard.page_title }}{% endblock %}
 
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 <div id="dashboard-app" class="page-app">
     <header class="page-header">
@@ -17,7 +21,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block page_js %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/page.js') }}"></script>
 {% endblock %}

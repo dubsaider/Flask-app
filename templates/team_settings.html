@@ -2,8 +2,8 @@
 
 {% block title %}{{ labels.team_settings.page_title }}{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/team-settings.css') }}">
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/team-settings.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -63,6 +63,6 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block page_js %}
 <script src="{{ url_for('static', filename='js/team_settings.js') }}"></script>
 {% endblock %}
