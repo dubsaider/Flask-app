@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from dotenv import load_dotenv
 from flask import Flask
-from flask_migrate import upgrade
 
 from config import client_config, get_config
 from labels import get_labels
+from db_setup import ensure_database
 from extensions import db, migrate
 from api.init import api_bp
 from web.init import web_bp
@@ -37,9 +35,7 @@ def create_app(config_name=None):
         }
 
     with app.app_context():
-        migrations_dir = Path(app.root_path) / 'migrations'
-        if app.config.get('AUTO_MIGRATE', True) and migrations_dir.exists():
-            upgrade()
+        ensure_database(app)
 
     return app
 
