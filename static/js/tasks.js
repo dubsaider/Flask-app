@@ -12,7 +12,7 @@ const TasksPage = {
             this.applyFilters();
         } catch (error) {
             console.error('Error loading tasks:', error);
-            this.showEmpty('⚠️', 'Не удалось загрузить задачи');
+            this.showEmpty('⚠️', Locale.get('tasks.load_error'));
         }
     },
 
@@ -33,12 +33,12 @@ const TasksPage = {
         DOM.clear(container);
 
         if (!tasks.length) {
-            this.showEmpty('📭', 'Нет задач по выбранным фильтрам');
+            this.showEmpty('📭', Locale.get('tasks.empty'));
             return;
         }
 
         if (groupBy === 'none') {
-            const group = this.buildGroup('Все задачи', tasks);
+            const group = this.buildGroup(Locale.get('tasks.all_tasks'), tasks);
             container.appendChild(group);
             return;
         }
@@ -91,7 +91,7 @@ const TasksPage = {
 
         const statusLabel = TaskWorkflow.label(task);
         const overdue = TaskFilters.isOverdue(task.deadline) && TaskWorkflow.status(task) === 'active'
-            ? ' · просрочена' : '';
+            ? Locale.get('tasks.overdue_suffix') : '';
         DOM.setField(row, 'meta',
             `${task.board_title} · ${task.column_title} · ${PRIORITY_LABELS[priority]} · ${statusLabel}${overdue}`
         );

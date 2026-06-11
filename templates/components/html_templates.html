@@ -30,12 +30,12 @@
 <template id="tpl-board-column">
     <article class="column" data-field="column">
         <header class="column-header">
-            <span class="column-drag-handle hidden" data-field="drag-handle" title="Перетащить колонку" aria-hidden="true">⠿</span>
+            <span class="column-drag-handle hidden" data-field="drag-handle" data-label-title="board.drag_column" aria-hidden="true">⠿</span>
             <button type="button" class="column-title" data-field="title-btn"></button>
-            <button type="button" class="btn-icon column-menu-btn hidden" data-field="menu-btn" aria-label="Настройки колонки" title="Настройки колонки">⚙</button>
+            <button type="button" class="btn-icon column-menu-btn hidden" data-field="menu-btn" data-label-title="board.column_settings" aria-label="{{ labels.board.column_settings }}" title="{{ labels.board.column_settings }}">⚙</button>
         </header>
         <div class="cards-list" data-field="cards-list"></div>
-        <button type="button" class="add-card-btn hidden" data-field="add-card-btn">+ Добавить карточку</button>
+        <button type="button" class="add-card-btn hidden" data-field="add-card-btn" data-label="board.add_card">+ Добавить карточку</button>
     </article>
 </template>
 
@@ -62,7 +62,7 @@
 </template>
 
 <template id="tpl-add-column-btn">
-    <button type="button" class="add-column-btn" data-field="add-column-btn">+ Добавить колонку</button>
+    <button type="button" class="add-column-btn" data-field="add-column-btn" data-label="board.add_column_btn">+ Добавить колонку</button>
 </template>
 
 <template id="tpl-comment-item">
@@ -124,15 +124,15 @@
         <div class="dashboard-team__stats" data-field="stats"></div>
         <div class="dashboard-team__grid">
             <div class="dashboard-panel" data-field="assignee-panel">
-                <h3 class="dashboard-panel__title">Нагрузка по исполнителям</h3>
+                <h3 class="dashboard-panel__title" data-label="dashboard.panel_assignees">{{ labels.dashboard.panel_assignees }}</h3>
                 <div class="dashboard-panel__body" data-field="assignee-list"></div>
             </div>
             <div class="dashboard-panel" data-field="priority-panel">
-                <h3 class="dashboard-panel__title">По приоритету</h3>
+                <h3 class="dashboard-panel__title" data-label="dashboard.panel_priority">{{ labels.dashboard.panel_priority }}</h3>
                 <div class="dashboard-panel__body" data-field="priority-list"></div>
             </div>
             <div class="dashboard-panel dashboard-panel--wide" data-field="issues-panel">
-                <h3 class="dashboard-panel__title">Требуют внимания</h3>
+                <h3 class="dashboard-panel__title" data-label="dashboard.panel_issues">{{ labels.dashboard.panel_issues }}</h3>
                 <div class="dashboard-panel__body" data-field="issues-list"></div>
             </div>
         </div>

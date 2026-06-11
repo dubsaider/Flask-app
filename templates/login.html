@@ -1,18 +1,18 @@
 {% extends "base_auth.html" %}
 
-{% block title %}Вход — Kanban Board{% endblock %}
+{% block title %}{{ labels.auth.login_title }}{% endblock %}
 
 {% block content %}
 <section class="login-page">
     <div class="login-card">
         <header class="login-header">
-            <div class="login-logo" aria-hidden="true">KB</div>
-            <h1 class="login-title">Kanban Board</h1>
-            <p class="login-subtitle">Выберите пользователя для входа</p>
+            <div class="login-logo" aria-hidden="true">{{ labels.app.brand_short }}</div>
+            <h1 class="login-title">{{ labels.app.name }}</h1>
+            <p class="login-subtitle">{{ labels.auth.login_subtitle }}</p>
         </header>
 
         <div id="login-users-list" class="login-users-list">
-            <p class="login-loading">Загрузка пользователей...</p>
+            <p class="login-loading">{{ labels.auth.login_loading }}</p>
         </div>
     </div>
 </section>

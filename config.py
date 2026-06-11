@@ -90,10 +90,13 @@ def _cfg_value(cfg, key, default=None):
 
 def client_config(cfg=None) -> dict:
     """Настройки, безопасные для передачи в браузер."""
+    from labels import get_client_labels
+
     if cfg is None:
         cfg = get_config()
     if isinstance(cfg, type):
         cfg = cfg()
     return {
         'richTextMaxImageSize': _cfg_value(cfg, 'RICH_TEXT_MAX_IMAGE_SIZE', 512000),
+        'labels': get_client_labels(),
     }

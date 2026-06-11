@@ -1,18 +1,18 @@
 {% extends "base_app.html" %}
 
-{% block title %}Дашборд — Kanban Board{% endblock %}
+{% block title %}{{ labels.dashboard.page_title }}{% endblock %}
 
 {% block content %}
 <div id="dashboard-app" class="page-app">
     <header class="page-header">
         <div>
-            <h1 class="page-title">Дашборд руководителя</h1>
-            <p class="page-subtitle">Обзор нагрузки и статуса задач по командам</p>
+            <h1 class="page-title">{{ labels.dashboard.title }}</h1>
+            <p class="page-subtitle">{{ labels.dashboard.subtitle }}</p>
         </div>
     </header>
 
     <div id="dashboard-content" class="dashboard-content">
-        <p class="page-loading">Загрузка...</p>
+        <p class="page-loading">{{ labels.dashboard.loading }}</p>
     </div>
 </div>
 {% endblock %}

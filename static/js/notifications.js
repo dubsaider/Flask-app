@@ -79,7 +79,7 @@ const Notifications = {
         if (!this.items.length) {
             const empty = document.createElement('p');
             empty.className = 'notifications-panel__empty';
-            empty.textContent = 'Нет уведомлений';
+            empty.textContent = Locale.get('notifications.empty');
             container.appendChild(empty);
             return;
         }
@@ -153,11 +153,11 @@ const Notifications = {
         const diffMs = now - date;
         const diffMin = Math.floor(diffMs / 60000);
 
-        if (diffMin < 1) return 'только что';
-        if (diffMin < 60) return `${diffMin} мин. назад`;
+        if (diffMin < 1) return Locale.get('notifications.time_now');
+        if (diffMin < 60) return Locale.format('notifications.time_minutes', { n: diffMin });
 
         const diffHours = Math.floor(diffMin / 60);
-        if (diffHours < 24) return `${diffHours} ч. назад`;
+        if (diffHours < 24) return Locale.format('notifications.time_hours', { n: diffHours });
 
         return date.toLocaleDateString('ru-RU', {
             day: 'numeric',

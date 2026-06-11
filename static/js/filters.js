@@ -101,8 +101,8 @@ const TaskFilters = {
 
     updateCount(shown, total) {
         const text = shown === total
-            ? `Показано: ${total}`
-            : `Показано: ${shown} из ${total}`;
+            ? Locale.format('filters.shown_all', { total })
+            : Locale.format('filters.shown_partial', { shown, total });
 
         document.querySelectorAll('.filter-result-count').forEach(el => {
             if (el.id === 'filter-result-count') {

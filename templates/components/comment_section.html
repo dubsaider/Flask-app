@@ -1,7 +1,7 @@
 <section class="comments-section">
     <header class="comments-section__header">
         <span class="comments-section__icon" aria-hidden="true">💬</span>
-        <h3 class="comments-title">Комментарии</h3>
+        <h3 class="comments-title">{{ labels.comments.title }}</h3>
     </header>
 
     <div id="comments-list" class="comments-list"></div>
@@ -9,6 +9,6 @@
     <div class="comment-form">
         <input type="hidden" id="comment-text-input">
         <div id="comment-editor" class="rich-text-editor rich-text-editor--comment"></div>
-        <button type="button" class="btn btn-primary comment-submit-btn" id="comment-submit-btn">Отправить</button>
+        <button type="button" class="btn btn-primary comment-submit-btn" id="comment-submit-btn">{{ labels.common.submit }}</button>
     </div>
 </section>

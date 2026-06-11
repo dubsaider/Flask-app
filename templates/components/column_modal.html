@@ -1,35 +1,31 @@
+{% from 'macros/ui.html' import form_actions, modal_close with context %}
+
 <!-- Модальное окно колонки -->
 <div id="column-modal" class="modal modal--column">
     <div class="modal-dialog modal-dialog--compact">
         <header class="modal-header modal-header--column">
             <div class="modal-header__leading">
                 <span class="modal-header__icon" aria-hidden="true">📑</span>
-                <h2 class="modal-title" id="column-modal-title">Колонка</h2>
+                <h2 class="modal-title" id="column-modal-title">{{ labels.column.title }}</h2>
             </div>
-            <button type="button" class="modal-close-btn" id="column-modal-close" aria-label="Закрыть">✕</button>
+            {{ modal_close('column-modal-close') }}
         </header>
 
         <div class="modal-body">
             <form id="column-form">
                 <input type="hidden" id="column-id">
                 <div class="form-group">
-                    <label class="form-label" for="column-title-input">Название</label>
+                    <label class="form-label" for="column-title-input">{{ labels.column.name_label }}</label>
                     <input type="text" id="column-title-input" class="form-control" required placeholder="In Progress">
-                    <p class="form-hint">Перетаскивайте заголовок колонки на доске, чтобы изменить порядок.</p>
+                    <p class="form-hint">{{ labels.column.drag_hint }}</p>
                 </div>
                 <div class="form-group">
                     <label class="filter-check">
                         <input type="checkbox" id="column-is-done-input">
-                        <span>Колонка завершения (Done) — задачи здесь считаются выполненными</span>
+                        <span>{{ labels.column.is_done }}</span>
                     </label>
                 </div>
-                <footer class="form-actions form-actions--split">
-                    <button type="button" class="btn btn-danger" id="column-delete-btn">Удалить</button>
-                    <div class="form-actions__right">
-                        <button type="button" class="btn btn-secondary" id="column-cancel-btn">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                    </div>
-                </footer>
+                {{ form_actions('column-cancel-btn', 'column-delete-btn', delete_class='') }}
             </form>
         </div>
     </div>

@@ -8,7 +8,7 @@ const DashboardPage = {
             this.render(data);
         } catch (error) {
             console.error('Error loading dashboard:', error);
-            this.showEmpty('⚠️', 'Не удалось загрузить дашборд');
+            this.showEmpty('⚠️', Locale.get('dashboard.load_error'));
         }
     },
 
@@ -17,7 +17,7 @@ const DashboardPage = {
         const hasDashboard = workspace.some(group => group.permissions?.view_dashboard);
 
         if (!hasDashboard) {
-            this.showEmpty('🔒', 'Дашборд недоступен для вашей роли');
+            this.showEmpty('🔒', Locale.get('dashboard.access_denied'));
             return false;
         }
         return true;
@@ -38,7 +38,7 @@ const DashboardPage = {
         const section = DOM.clone('tpl-dashboard-team');
         DOM.setField(section, 'team-name', data.team.name);
 
-        const boardNames = data.boards.map(b => b.title).join(', ') || 'Нет досок';
+        const boardNames = data.boards.map(b => b.title).join(', ') || Locale.get('dashboard.no_boards');
         DOM.setField(section, 'boards', boardNames);
 
         const statsContainer = section.querySelector('[data-field="stats"]');
@@ -53,11 +53,11 @@ const DashboardPage = {
 
     buildSummaryStats(summary) {
         return [
-            { value: summary.total, label: 'Всего задач' },
-            { value: summary.active, label: 'Активных' },
-            { value: summary.completed, label: 'Завершено' },
-            { value: summary.overdue, label: 'Просрочено' },
-            { value: summary.unassigned, label: 'Без исполнителя' }
+            { value: summary.total, label: Locale.get('dashboard.stat_total') },
+            { value: summary.active, label: Locale.get('dashboard.stat_active') },
+            { value: summary.completed, label: Locale.get('dashboard.stat_completed') },
+            { value: summary.overdue, label: Locale.get('dashboard.stat_overdue') },
+            { value: summary.unassigned, label: Locale.get('dashboard.stat_unassigned') }
         ].map(item => {
             const node = DOM.clone('tpl-stat-card');
             DOM.setField(node, 'value', String(item.value));
@@ -71,7 +71,7 @@ const DashboardPage = {
         DOM.clear(container);
 
         if (!assignees.length) {
-            container.appendChild(this.makePanelEmpty('Нет назначенных задач'));
+            container.appendChild(this.makePanelEmpty(Locale.get('dashboard.no_assignees')));
             return;
         }
 
@@ -79,7 +79,10 @@ const DashboardPage = {
         assignees.forEach(item => {
             const row = DOM.clone('tpl-assignee-bar');
             DOM.setField(row, 'name', item.username);
-            DOM.setField(row, 'count', `${item.active} акт. / ${item.overdue} проср.`);
+            DOM.setField(row, 'count', Locale.format('dashboard.assignee_count', {
+                active: item.active,
+                overdue: item.overdue
+            }));
 
             const fill = row.querySelector('[data-field="fill"]');
             fill.style.width = `${Math.round((item.active / max) * 100)}%`;
@@ -117,7 +120,7 @@ const DashboardPage = {
         ];
 
         if (!issues.length) {
-            container.appendChild(this.makePanelEmpty('Нет проблемных задач'));
+            container.appendChild(this.makePanelEmpty(Locale.get('dashboard.no_issues')));
             return;
         }
 
@@ -127,7 +130,9 @@ const DashboardPage = {
             link.href = `/board/${task.board_id}`;
 
             DOM.setField(row, 'title', task.title);
-            const prefix = type === 'overdue' ? '⚠ Просрочена' : '○ Без исполнителя';
+            const prefix = type === 'overdue'
+                ? Locale.get('dashboard.issue_overdue')
+                : Locale.get('dashboard.issue_unassigned');
             DOM.setField(row, 'meta',
                 `${prefix} · ${task.board_title} · ${task.column_title}`
             );

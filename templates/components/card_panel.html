@@ -1,9 +1,11 @@
-<aside id="card-panel" class="card-panel" aria-hidden="true" aria-label="Карточка">
+{% from 'macros/ui.html' import form_actions, priority_options with context %}
+
+<aside id="card-panel" class="card-panel" aria-hidden="true" aria-label="{{ labels.card.panel_label }}">
     <div class="card-panel__inner">
         <header class="card-panel__header">
             <div class="card-panel__toolbar">
                 <div class="card-panel__chips" id="card-panel-chips"></div>
-                <button type="button" class="card-panel__close" id="card-panel-close" aria-label="Закрыть">
+                <button type="button" class="card-panel__close" id="card-panel-close" aria-label="{{ labels.common.close }}">
                     <span aria-hidden="true">✕</span>
                 </button>
             </div>
@@ -14,7 +16,7 @@
                 id="card-title-input"
                 class="card-panel__title card-panel__title--edit hidden"
                 required
-                placeholder="Название задачи"
+                placeholder="{{ labels.card.title_placeholder }}"
             >
 
             <div class="card-panel__meta" id="card-panel-meta"></div>
@@ -23,10 +25,7 @@
         <div class="card-panel__body">
             <div id="card-readonly-hint" class="card-panel__hint hidden" role="status">
                 <span class="card-panel__hint-icon" aria-hidden="true">ℹ</span>
-                <p class="card-panel__hint-text">
-                    Описание и параметры задачи редактирует только <strong>руководитель</strong>.
-                    Вы можете перемещать свои задачи на доске и оставлять комментарии.
-                </p>
+                <p class="card-panel__hint-text">{{ labels.card.readonly_hint | safe }}</p>
             </div>
 
             <form id="card-form" class="card-form">
@@ -34,58 +33,51 @@
                 <input type="hidden" id="card-column-id">
 
                 <section class="card-panel__section">
-                    <h3 class="card-panel__section-title">Параметры</h3>
+                    <h3 class="card-panel__section-title">{{ labels.card.section_params }}</h3>
                     <div class="card-panel__fields">
                         <div class="form-group leader-only hidden">
-                            <label class="form-label" for="card-assignee-input">Исполнитель</label>
+                            <label class="form-label" for="card-assignee-input">{{ labels.card.assignee }}</label>
                             <select id="card-assignee-input" class="form-control">
-                                <option value="">Не назначен</option>
+                                <option value="">{{ labels.common.unassigned }}</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="card-priority-input">Приоритет</label>
+                            <label class="form-label" for="card-priority-input">{{ labels.card.priority }}</label>
                             <select id="card-priority-input" class="form-control form-control--priority">
-                                <option value="low">Низкий</option>
-                                <option value="medium" selected>Средний</option>
-                                <option value="high">Высокий</option>
-                                <option value="critical">Критический</option>
+                                {{ priority_options('medium') }}
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="card-deadline-input">Дедлайн</label>
+                            <label class="form-label" for="card-deadline-input">{{ labels.card.deadline }}</label>
                             <input type="datetime-local" id="card-deadline-input" class="form-control">
                         </div>
 
                         <div class="form-group leader-only hidden">
-                            <label class="form-label" for="card-archived-input">Архив</label>
+                            <label class="form-label" for="card-archived-input">{{ labels.card.archive }}</label>
                             <label class="filter-check card-panel__archive-check">
                                 <input type="checkbox" id="card-archived-input">
-                                <span>В архиве</span>
+                                <span>{{ labels.card.archived_check }}</span>
                             </label>
                         </div>
                     </div>
                 </section>
 
                 <section class="card-panel__section">
-                    <h3 class="card-panel__section-title">Описание</h3>
+                    <h3 class="card-panel__section-title">{{ labels.card.section_description }}</h3>
                     <input type="hidden" id="card-description-input">
                     <div id="card-description-editor" class="rich-text-editor rich-text-editor--card"></div>
                 </section>
 
                 <footer class="form-actions form-actions--split card-edit-actions hidden card-panel__footer">
-                    <button type="button" class="btn btn-danger leader-only hidden" id="card-delete-btn">Удалить</button>
-                    <div class="form-actions__right">
-                        <button type="button" class="btn btn-secondary" id="card-cancel-btn">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                    </div>
+                    {{ form_actions('card-cancel-btn', 'card-delete-btn', footer_class='card-edit-actions hidden card-panel__footer') }}
                 </footer>
             </form>
 
             <div id="card-view-only" class="card-view-only hidden">
                 <section class="card-panel__section">
-                    <h3 class="card-panel__section-title">Описание</h3>
+                    <h3 class="card-panel__section-title">{{ labels.card.section_description }}</h3>
                     <div id="view-description" class="card-panel__description rich-text-content"></div>
                 </section>
             </div>

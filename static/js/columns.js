@@ -1,6 +1,6 @@
 const Columns = {
     async add() {
-        const title = prompt('Название колонки:');
+        const title = prompt(Locale.get('column.name_prompt'));
         if (!title || !Board.boardId) return;
 
         try {
@@ -10,7 +10,7 @@ const Columns = {
             });
             Board.loadColumns();
         } catch (error) {
-            alert('Ошибка создания колонки: ' + error.message);
+            alert(`${Locale.get('column.create_error')}: ${error.message}`);
         }
     },
 
@@ -31,7 +31,7 @@ const Columns = {
             });
             await Board.loadColumns();
         } catch (error) {
-            alert('Ошибка изменения порядка колонок: ' + error.message);
+            alert(`${Locale.get('column.reorder_error')}: ${error.message}`);
             Board.loadColumns();
         }
     },
@@ -52,20 +52,20 @@ const Columns = {
             Modals.closeColumn();
             Board.loadColumns();
         } catch (error) {
-            alert('Ошибка сохранения колонки: ' + error.message);
+            alert(`${Locale.get('column.save_error')}: ${error.message}`);
         }
     },
 
     async deleteColumn() {
         const columnId = document.getElementById('column-id').value;
-        if (!columnId || !confirm('Удалить колонку и все карточки в ней?')) return;
+        if (!columnId || !confirm(Locale.get('column.delete_confirm'))) return;
 
         try {
             await API.deleteColumn(parseInt(columnId), { user_id: Auth.getCurrentUser().id });
             Modals.closeColumn();
             Board.loadColumns();
         } catch (error) {
-            alert('Ошибка удаления колонки: ' + error.message);
+            alert(`${Locale.get('column.delete_error')}: ${error.message}`);
         }
     }
 };

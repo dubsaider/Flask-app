@@ -2,8 +2,8 @@
     <div class="sidebar-inner">
         <header class="sidebar-header">
             <div class="sidebar-brand">
-                <span class="sidebar-brand-icon" aria-hidden="true">KB</span>
-                <span class="sidebar-brand-text">Kanban</span>
+                <span class="sidebar-brand-icon" aria-hidden="true">{{ labels.app.brand_short }}</span>
+                <span class="sidebar-brand-text">{{ labels.app.brand_name }}</span>
             </div>
             <div class="sidebar-header-actions">
                 <button
@@ -12,7 +12,7 @@
                     id="sidebar-notify-btn"
                     aria-expanded="false"
                     aria-controls="notifications-panel"
-                    title="Уведомления"
+                    title="{{ labels.nav.notifications }}"
                 >
                     <span aria-hidden="true">🔔</span>
                     <span class="sidebar-notify-badge hidden" id="sidebar-notify-badge">0</span>
@@ -22,8 +22,8 @@
                     class="sidebar-collapse-btn"
                     id="sidebar-collapse-btn"
                     aria-expanded="true"
-                    aria-label="Свернуть панель"
-                    title="Свернуть панель"
+                    aria-label="{{ labels.nav.collapse_sidebar }}"
+                    title="{{ labels.nav.collapse_sidebar }}"
                 >
                     <span class="sidebar-collapse-icon" aria-hidden="true">‹</span>
                 </button>
@@ -33,19 +33,19 @@
         <section class="sidebar-pages" id="sidebar-pages">
             <a href="/tasks" class="sidebar-page-link" id="nav-tasks" data-page="tasks">
                 <span class="sidebar-page-icon" aria-hidden="true">✓</span>
-                <span class="sidebar-page-text">Мои задачи</span>
+                <span class="sidebar-page-text">{{ labels.nav.my_tasks }}</span>
             </a>
             <a href="/dashboard" class="sidebar-page-link hidden" id="nav-dashboard" data-page="dashboard">
                 <span class="sidebar-page-icon" aria-hidden="true">📊</span>
-                <span class="sidebar-page-text">Дашборд</span>
+                <span class="sidebar-page-text">{{ labels.nav.dashboard }}</span>
             </a>
             <a href="#" class="sidebar-page-link hidden" id="nav-team-settings" data-page="team-settings">
                 <span class="sidebar-page-icon" aria-hidden="true">⚙</span>
-                <span class="sidebar-page-text">Команда</span>
+                <span class="sidebar-page-text">{{ labels.nav.team }}</span>
             </a>
         </section>
 
-        <nav class="sidebar-nav" id="sidebar-nav" aria-label="Доски">
+        <nav class="sidebar-nav" id="sidebar-nav" aria-label="{{ labels.nav.boards }}">
             <div class="sidebar-nav-scroll" id="sidebar-board-groups"></div>
         </nav>
 
@@ -53,18 +53,18 @@
             <div class="sidebar-user" id="sidebar-user">
                 <div class="sidebar-user-avatar" id="sidebar-user-avatar" aria-hidden="true">?</div>
                 <div class="sidebar-user-info">
-                    <span class="sidebar-user-name" id="sidebar-user-name">Guest</span>
+                    <span class="sidebar-user-name" id="sidebar-user-name">{{ labels.common.guest }}</span>
                     <span class="sidebar-user-role" id="sidebar-user-role"></span>
                 </div>
-                <button type="button" class="sidebar-logout-btn" id="sidebar-logout-btn">Выйти</button>
+                <button type="button" class="sidebar-logout-btn" id="sidebar-logout-btn">{{ labels.common.logout }}</button>
             </div>
         </footer>
 
-        <section class="notifications-panel hidden" id="notifications-panel" aria-label="Уведомления">
+        <section class="notifications-panel hidden" id="notifications-panel" aria-label="{{ labels.nav.notifications }}">
             <header class="notifications-panel__header">
-                <h2 class="notifications-panel__title">Уведомления</h2>
+                <h2 class="notifications-panel__title">{{ labels.nav.notifications }}</h2>
                 <div class="notifications-panel__actions">
-                    <button type="button" class="btn btn-secondary btn-sm" id="notifications-read-all">Прочитать все</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="notifications-read-all">{{ labels.nav.read_all }}</button>
                 </div>
             </header>
             <div class="notifications-panel__list" id="notifications-list"></div>

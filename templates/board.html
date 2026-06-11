@@ -1,6 +1,6 @@
 {% extends "base_app.html" %}
 
-{% block title %}Доска — Kanban Board{% endblock %}
+{% block title %}{{ labels.board.title }}{% endblock %}
 
 {% block content %}
 <div id="board-app" class="board-app" data-board-id="{{ board_id }}">

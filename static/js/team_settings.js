@@ -29,7 +29,7 @@ const TeamSettingsPage = {
 
             document.getElementById('team-settings-title').textContent = team.name;
             document.getElementById('team-settings-desc').textContent =
-                team.description || 'Управление ролями и участниками команды';
+                team.description || Locale.get('team_settings.default_desc');
 
             if (!Permissions.canManageRoles() && !Permissions.canManageTeamMembers()) {
                 this.showAccessDenied();
@@ -43,7 +43,7 @@ const TeamSettingsPage = {
             this.updateTeamSettingsNav();
         } catch (error) {
             console.error(error);
-            this.showAccessDenied('Не удалось загрузить настройки команды');
+            this.showAccessDenied(Locale.get('team_settings.load_error'));
         }
     },
 
@@ -105,20 +105,23 @@ const TeamSettingsPage = {
         card.dataset.roleId = role.id;
 
         const canEdit = Permissions.canManageRoles();
-        const badges = role.is_system
-            ? '<span class="role-card__badge">Шаблон</span>'
-            : '<span class="role-card__badge">Своя роль</span>';
+        const badgeText = role.is_system
+            ? Locale.get('team_settings.badge_template')
+            : Locale.get('team_settings.badge_custom');
+        const templateMeta = role.template_key
+            ? `${Locale.get('team_settings.template_basis')}${role.template_key}`
+            : '';
 
         card.innerHTML = `
             <div class="role-card__header">
                 <div>
                     <div class="role-card__title">${role.name}</div>
-                    <div class="role-card__meta">${role.slug}${role.template_key ? ` · основа: ${role.template_key}` : ''}</div>
+                    <div class="role-card__meta">${role.slug}${templateMeta}</div>
                 </div>
-                ${badges}
+                <span class="role-card__badge">${badgeText}</span>
             </div>
             <input type="text" class="form-control role-card__name-input" value="${role.name}" ${canEdit ? '' : 'disabled'}>
-            <input type="text" class="form-control role-card__desc-input" value="${role.description || ''}" placeholder="Описание роли" ${canEdit ? '' : 'disabled'}>
+            <input type="text" class="form-control role-card__desc-input" value="${role.description || ''}" placeholder="${Locale.get('team_settings.role_desc_placeholder')}" ${canEdit ? '' : 'disabled'}>
             <div class="role-card__permissions"></div>
             <div class="role-card__actions"></div>
         `;
@@ -139,7 +142,7 @@ const TeamSettingsPage = {
             const saveBtn = document.createElement('button');
             saveBtn.type = 'button';
             saveBtn.className = 'btn btn-primary btn-sm';
-            saveBtn.textContent = 'Сохранить';
+            saveBtn.textContent = Locale.get('common.save');
             saveBtn.addEventListener('click', () => this.saveRole(role.id, card));
             actions.appendChild(saveBtn);
 
@@ -147,7 +150,7 @@ const TeamSettingsPage = {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.className = 'btn btn-danger btn-sm';
-                deleteBtn.textContent = 'Удалить';
+                deleteBtn.textContent = Locale.get('common.delete');
                 deleteBtn.addEventListener('click', () => this.deleteRole(role.id, role.name));
                 actions.appendChild(deleteBtn);
             }
@@ -170,19 +173,19 @@ const TeamSettingsPage = {
                 permissions
             });
             await this.reloadTeam();
-            alert('Роль сохранена');
+            alert(Locale.get('team_settings.role_saved'));
         } catch (error) {
-            alert('Ошибка: ' + error.message);
+            alert(`${Locale.get('common.error')}: ${error.message}`);
         }
     },
 
     async deleteRole(roleId, name) {
-        if (!confirm(`Удалить роль «${name}»?`)) return;
+        if (!confirm(Locale.format('team_settings.delete_role_confirm', { name }))) return;
         try {
             await API.deleteTeamRole(this.teamId, roleId, { user_id: Auth.getCurrentUser().id });
             await this.reloadTeam();
         } catch (error) {
-            alert('Ошибка: ' + error.message);
+            alert(`${Locale.get('common.error')}: ${error.message}`);
         }
     },
 
@@ -200,7 +203,7 @@ const TeamSettingsPage = {
 
         const emptyCurator = document.createElement('option');
         emptyCurator.value = '';
-        emptyCurator.textContent = 'Не назначен';
+        emptyCurator.textContent = Locale.get('common.unassigned');
         curatorSelect.appendChild(emptyCurator);
 
         Auth.allUsers.forEach(user => {
@@ -267,7 +270,7 @@ const TeamSettingsPage = {
             const saveBtn = document.createElement('button');
             saveBtn.type = 'button';
             saveBtn.className = 'btn btn-secondary btn-sm';
-            saveBtn.textContent = 'Сменить роль';
+            saveBtn.textContent = Locale.get('team_settings.change_role');
             saveBtn.addEventListener('click', async () => {
                 try {
                     await API.updateTeamMember(this.teamId, member.id, {
@@ -276,16 +279,16 @@ const TeamSettingsPage = {
                     });
                     await this.reloadTeam();
                 } catch (error) {
-                    alert('Ошибка: ' + error.message);
+                    alert(`${Locale.get('common.error')}: ${error.message}`);
                 }
             });
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'btn btn-danger btn-sm';
-            removeBtn.textContent = 'Удалить';
+            removeBtn.textContent = Locale.get('common.delete');
             removeBtn.addEventListener('click', async () => {
-                if (!confirm(`Удалить ${member.username} из команды?`)) return;
+                if (!confirm(Locale.format('team_settings.remove_member_confirm', { name: member.username }))) return;
                 try {
                     await API.removeTeamMember(this.teamId, {
                         user_id: Auth.getCurrentUser().id,
@@ -293,7 +296,7 @@ const TeamSettingsPage = {
                     });
                     await this.reloadTeam();
                 } catch (error) {
-                    alert('Ошибка: ' + error.message);
+                    alert(`${Locale.get('common.error')}: ${error.message}`);
                 }
             });
 
@@ -318,7 +321,7 @@ const TeamSettingsPage = {
                 });
                 await this.reloadTeam();
             } catch (error) {
-                alert('Ошибка: ' + error.message);
+                alert(`${Locale.get('common.error')}: ${error.message}`);
             }
         });
 
@@ -334,7 +337,7 @@ const TeamSettingsPage = {
                 });
                 await this.reloadTeam();
             } catch (error) {
-                alert('Ошибка: ' + error.message);
+                alert(`${Locale.get('common.error')}: ${error.message}`);
             }
         });
 
@@ -349,7 +352,7 @@ const TeamSettingsPage = {
                 });
                 await this.reloadTeam();
             } catch (error) {
-                alert('Ошибка: ' + error.message);
+                alert(`${Locale.get('common.error')}: ${error.message}`);
             }
         });
     },

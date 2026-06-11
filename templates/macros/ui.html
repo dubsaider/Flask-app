@@ -1,0 +1,35 @@
+{% macro form_actions(cancel_id, delete_id=none, delete_class='leader-only hidden', footer_class='') %}
+<footer class="form-actions form-actions--split {{ footer_class }}">
+    {% if delete_id %}
+    <button type="button" class="btn btn-danger {{ delete_class }}" id="{{ delete_id }}">{{ labels.common.delete }}</button>
+    {% endif %}
+    <div class="form-actions__right">
+        <button type="button" class="btn btn-secondary" id="{{ cancel_id }}">{{ labels.common.cancel }}</button>
+        <button type="submit" class="btn btn-primary">{{ labels.common.save }}</button>
+    </div>
+</footer>
+{% endmacro %}
+
+{% macro priority_options(selected='', include_all=false, all_label=none) %}
+{% if include_all %}
+<option value="">{{ all_label or labels.common.all }}</option>
+{% endif %}
+{% for key, label in labels.enums.priority.items() %}
+<option value="{{ key }}"{% if selected == key %} selected{% endif %}>{{ label }}</option>
+{% endfor %}
+{% endmacro %}
+
+{% macro workflow_options(selected='', include_all=false) %}
+{% if include_all %}
+<option value="">{{ labels.common.all }}</option>
+{% endif %}
+{% for key, label in labels.enums.workflow.items() %}
+<option value="{{ key }}"{% if selected == key %} selected{% endif %}>{{ label }}</option>
+{% endfor %}
+{% endmacro %}
+
+{% macro modal_close(id, css_class='modal-close-btn') %}
+<button type="button" class="{{ css_class }}" id="{{ id }}" aria-label="{{ labels.common.close }}">
+    <span aria-hidden="true">✕</span>
+</button>
+{% endmacro %}

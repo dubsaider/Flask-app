@@ -1,36 +1,31 @@
+{% from 'macros/ui.html' import priority_options, workflow_options with context %}
+
 <section class="task-filters" id="task-filters">
     <div class="task-filters__row">
         <div class="filter-group filter-group--search">
-            <label class="filter-label" for="filter-search">Поиск</label>
-            <input type="search" id="filter-search" class="form-control" placeholder="Название или описание...">
+            <label class="filter-label" for="filter-search">{{ labels.filters.search }}</label>
+            <input type="search" id="filter-search" class="form-control" placeholder="{{ labels.filters.search_placeholder }}">
         </div>
 
         <div class="filter-group">
-            <label class="filter-label" for="filter-priority">Приоритет</label>
+            <label class="filter-label" for="filter-priority">{{ labels.filters.priority }}</label>
             <select id="filter-priority" class="form-control">
-                <option value="">Все</option>
-                <option value="low">Низкий</option>
-                <option value="medium">Средний</option>
-                <option value="high">Высокий</option>
-                <option value="critical">Критический</option>
+                {{ priority_options(include_all=true) }}
             </select>
         </div>
 
         <div class="filter-group">
-            <label class="filter-label" for="filter-status">Статус</label>
+            <label class="filter-label" for="filter-status">{{ labels.filters.status }}</label>
             <select id="filter-status" class="form-control">
-                <option value="">Все</option>
-                <option value="active">В работе</option>
-                <option value="completed">Завершена</option>
-                <option value="archived">В архиве</option>
+                {{ workflow_options(include_all=true) }}
             </select>
         </div>
 
         <div class="filter-group filter-group--assignee">
-            <label class="filter-label" for="filter-assignee">Исполнитель</label>
+            <label class="filter-label" for="filter-assignee">{{ labels.filters.assignee }}</label>
             <select id="filter-assignee" class="form-control">
-                <option value="">Все</option>
-                <option value="unassigned">Не назначен</option>
+                <option value="">{{ labels.common.all }}</option>
+                <option value="unassigned">{{ labels.common.unassigned }}</option>
             </select>
         </div>
     </div>
@@ -38,13 +33,13 @@
     <div class="task-filters__row task-filters__row--checks">
         <label class="filter-check">
             <input type="checkbox" id="filter-overdue">
-            <span>Только просроченные</span>
+            <span>{{ labels.filters.overdue_only }}</span>
         </label>
         <label class="filter-check filter-check--mine hidden" id="filter-mine-wrap">
             <input type="checkbox" id="filter-mine">
-            <span>Только мои задачи</span>
+            <span>{{ labels.filters.mine_only }}</span>
         </label>
-        <button type="button" class="btn btn-secondary btn-sm" id="filter-reset">Сбросить</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="filter-reset">{{ labels.common.reset }}</button>
         <span class="filter-result-count filter-result-count--inline"></span>
     </div>
 </section>

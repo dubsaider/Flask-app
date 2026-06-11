@@ -30,7 +30,7 @@ const RichText = {
 
         this.editors.card = new Quill(container, {
             theme: 'snow',
-            placeholder: 'Подробности, ссылки, чек-лист...',
+            placeholder: Locale.get('rich_text.card_placeholder'),
             modules: { toolbar: this.cardToolbar }
         });
 
@@ -47,7 +47,7 @@ const RichText = {
 
         this.editors.comment = new Quill(container, {
             theme: 'snow',
-            placeholder: 'Написать комментарий...',
+            placeholder: Locale.get('comments.editor_placeholder'),
             modules: { toolbar: this.commentToolbar }
         });
 
@@ -69,7 +69,7 @@ const RichText = {
                 const file = input.files?.[0];
                 if (!file) return;
                 if (file.size > this.maxImageSize) {
-                    alert('Изображение должно быть не больше 500 КБ');
+                    alert(Locale.get('rich_text.image_too_large'));
                     return;
                 }
                 const reader = new FileReader();

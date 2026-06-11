@@ -1,23 +1,7 @@
 """Шаблоны ролей и описание прав доступа."""
 import json
 
-PERMISSION_LABELS = {
-    'view_board': 'Просмотр доски',
-    'comment': 'Комментарии',
-    'create_card': 'Создание задач',
-    'edit_card': 'Редактирование задач',
-    'delete_card': 'Удаление задач',
-    'move_card': 'Перемещение любых задач',
-    'move_card_own_only': 'Перемещение своих задач',
-    'assign_card': 'Назначение исполнителя',
-    'archive_card': 'Архивирование задач',
-    'manage_columns': 'Управление колонками',
-    'manage_board': 'Управление досками',
-    'manage_team_members': 'Управление участниками',
-    'manage_roles': 'Настройка ролей',
-    'view_dashboard': 'Дашборд команды',
-    'view_all_tasks': 'Просмотр всех задач (фильтры)',
-}
+from labels import PERMISSION_LABELS
 
 ALL_PERMISSION_KEYS = list(PERMISSION_LABELS.keys())
 

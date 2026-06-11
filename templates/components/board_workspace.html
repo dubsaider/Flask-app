@@ -1,7 +1,7 @@
 <section id="board-workspace" class="board-workspace">
     <header class="board-toolbar">
         <div class="board-toolbar__info">
-            <h1 class="board-title" id="board-title">Загрузка...</h1>
+            <h1 class="board-title" id="board-title">{{ labels.board.loading }}</h1>
             <p class="board-description hidden" id="board-description"></p>
         </div>
 
@@ -14,14 +14,14 @@
                 aria-controls="board-filters-panel"
             >
                 <span class="board-filter-toggle__icon" aria-hidden="true">⌕</span>
-                <span class="board-filter-toggle__label">Фильтры</span>
+                <span class="board-filter-toggle__label">{{ labels.board.filters }}</span>
                 <span class="filter-result-count" id="filter-result-count"></span>
             </button>
 
             <div class="board-actions leader-only hidden">
-                <button type="button" class="btn btn-secondary btn-sm" id="add-column-toolbar-btn">+ Колонка</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="edit-board-btn">Изменить</button>
-                <button type="button" class="btn btn-danger btn-sm" id="delete-board-btn">Удалить</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-column-toolbar-btn">{{ labels.board.add_column }}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="edit-board-btn">{{ labels.board.edit_board }}</button>
+                <button type="button" class="btn btn-danger btn-sm" id="delete-board-btn">{{ labels.board.delete_board }}</button>
             </div>
         </div>
     </header>

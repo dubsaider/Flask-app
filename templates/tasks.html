@@ -1,23 +1,23 @@
 {% extends "base_app.html" %}
 
-{% block title %}Мои задачи — Kanban Board{% endblock %}
+{% block title %}{{ labels.tasks.page_title }}{% endblock %}
 
 {% block content %}
 <div id="tasks-app" class="page-app">
     <header class="page-header">
         <div>
-            <h1 class="page-title">Мои задачи</h1>
-            <p class="page-subtitle">Все назначенные вам задачи по проектам</p>
+            <h1 class="page-title">{{ labels.tasks.title }}</h1>
+            <p class="page-subtitle">{{ labels.tasks.subtitle }}</p>
         </div>
         <div class="page-header-actions">
             <span class="filter-result-count" id="filter-result-count"></span>
             <label class="group-toggle">
-                <span>Группировка:</span>
+                <span>{{ labels.tasks.group_by }}</span>
                 <select id="tasks-group-by" class="form-control form-control--compact">
-                    <option value="board" selected>По доскам</option>
-                    <option value="none">Список</option>
-                    <option value="priority">По приоритету</option>
-                    <option value="status">По статусу</option>
+                    <option value="board" selected>{{ labels.tasks.group_board }}</option>
+                    <option value="none">{{ labels.tasks.group_none }}</option>
+                    <option value="priority">{{ labels.tasks.group_priority }}</option>
+                    <option value="status">{{ labels.tasks.group_status }}</option>
                 </select>
             </label>
         </div>
@@ -26,7 +26,7 @@
     {% include 'components/task_filters.html' %}
 
     <div id="tasks-content" class="tasks-content">
-        <p class="page-loading">Загрузка задач...</p>
+        <p class="page-loading">{{ labels.tasks.loading }}</p>
     </div>
 </div>
 {% endblock %}

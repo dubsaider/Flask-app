@@ -1,18 +1,18 @@
-const PRIORITY_LABELS = {
+const PRIORITY_LABELS = window.APP_CONFIG?.labels?.enums?.priority || {
     low: 'Низкий',
     medium: 'Средний',
     high: 'Высокий',
     critical: 'Критический'
 };
 
-const ROLE_LABELS = {
+const ROLE_LABELS = window.APP_CONFIG?.labels?.enums?.roles || {
     leader: 'Руководитель',
     developer: 'Разработчик',
     curator: 'Куратор',
     none: 'Нет доступа'
 };
 
-const ROLE_DESCRIPTIONS = {
+const ROLE_DESCRIPTIONS = window.APP_CONFIG?.labels?.enums?.role_descriptions || {
     leader: 'Полное управление доской, задачами и командой',
     developer: 'Перемещение своих задач на доске и комментарии',
     curator: 'Просмотр и комментарии без редактирования',
@@ -35,25 +35,9 @@ const TEMPLATE_PERMISSIONS = {
     }
 };
 
-const PERMISSION_LABELS = {
-    view_board: 'Просмотр доски',
-    comment: 'Комментарии',
-    create_card: 'Создание задач',
-    edit_card: 'Редактирование задач',
-    delete_card: 'Удаление задач',
-    move_card: 'Перемещение любых задач',
-    move_card_own_only: 'Перемещение своих задач',
-    assign_card: 'Назначение исполнителя',
-    archive_card: 'Архивирование задач',
-    manage_columns: 'Управление колонками',
-    manage_board: 'Управление досками',
-    manage_team_members: 'Управление участниками',
-    manage_roles: 'Настройка ролей',
-    view_dashboard: 'Дашборд команды',
-    view_all_tasks: 'Просмотр всех задач'
-};
+const PERMISSION_LABELS = window.APP_CONFIG?.labels?.enums?.permissions || {};
 
-const WORKFLOW_LABELS = {
+const WORKFLOW_LABELS = window.APP_CONFIG?.labels?.enums?.workflow || {
     active: 'В работе',
     completed: 'Завершена',
     archived: 'В архиве'

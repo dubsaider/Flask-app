@@ -43,8 +43,12 @@ const Sidebar = {
 
         if (btn) {
             btn.setAttribute('aria-expanded', String(!this.collapsed));
-            btn.setAttribute('aria-label', this.collapsed ? 'Развернуть панель' : 'Свернуть панель');
-            btn.title = this.collapsed ? 'Развернуть панель' : 'Свернуть панель';
+            btn.setAttribute('aria-label', this.collapsed
+                ? Locale.get('nav.expand_sidebar')
+                : Locale.get('nav.collapse_sidebar'));
+            btn.title = this.collapsed
+                ? Locale.get('nav.expand_sidebar')
+                : Locale.get('nav.collapse_sidebar');
         }
     },
 

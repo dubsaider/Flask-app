@@ -34,7 +34,7 @@ const LoginPage = {
             DOM.clear(container);
             const message = document.createElement('p');
             message.className = 'login-error';
-            message.textContent = 'Не удалось загрузить пользователей';
+            message.textContent = Locale.get('auth.login_error');
             container.appendChild(message);
         }
     }

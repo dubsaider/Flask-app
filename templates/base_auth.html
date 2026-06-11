@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kanban Board{% endblock %}</title>
+    <title>{% block title %}{{ labels.app.name }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -14,6 +14,8 @@
 
     {% include 'components/html_templates.html' %}
 
+    <script>window.APP_CONFIG = {{ client_config | tojson }};</script>
+    <script src="{{ url_for('static', filename='js/locale.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>

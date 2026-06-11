@@ -32,7 +32,7 @@ const Modals = {
     },
 
     prepareNewCard(columnId) {
-        document.getElementById('card-panel-title').textContent = 'Новая карточка';
+        document.getElementById('card-panel-title').textContent = Locale.get('card.new_title');
         document.getElementById('card-panel-title')?.classList.add('hidden');
         const titleInput = document.getElementById('card-title-input');
         titleInput?.classList.remove('hidden');

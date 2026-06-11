@@ -27,7 +27,7 @@ const Board = {
                 Modals.closeBoard();
                 this.load();
             } catch (error) {
-                alert('Ошибка сохранения доски: ' + error.message);
+                alert(`${Locale.get('board.save_error')}: ${error.message}`);
             }
         });
 
@@ -65,8 +65,8 @@ const Board = {
             TaskFilters.showMineOption(!Permissions.canViewAllTasks());
 
             if (!Permissions.canViewBoard()) {
-                this.showState('🔒', 'Доступ запрещён', 'Вы не являетесь участником этой команды', [
-                    { text: 'Войти', href: '/login', primary: true }
+                this.showState('🔒', Locale.get('board.access_denied_title'), Locale.get('board.access_denied_message'), [
+                    { text: Locale.get('common.login'), href: '/login', primary: true }
                 ]);
                 return;
             }
@@ -76,7 +76,7 @@ const Board = {
             this.openCardFromQuery();
         } catch (error) {
             console.error('Error loading board:', error);
-            this.showState('⚠️', 'Ошибка', error.message, []);
+            this.showState('⚠️', Locale.get('common.error'), error.message, []);
         }
     },
 
@@ -183,8 +183,8 @@ const Board = {
                 columnEl.classList.add('column--manageable');
                 DOM.show(menuBtn);
                 DOM.show(dragHandle);
-                titleBtn.title = 'Настройки колонки';
-                menuBtn.title = 'Настройки колонки';
+                titleBtn.title = Locale.get('board.column_settings');
+                menuBtn.title = Locale.get('board.column_settings');
                 const openColumn = (event) => {
                     event.stopPropagation();
                     Modals.openColumn(column.id, column.title, column.is_done);
@@ -261,7 +261,7 @@ const Board = {
     },
 
     async deleteBoard() {
-        if (!confirm('Удалить эту доску?')) return;
+        if (!confirm(Locale.get('board.delete_confirm'))) return;
 
         await API.deleteBoard(this.boardId, { user_id: Auth.getCurrentUser().id });
         await Auth.redirectToDefaultBoard();

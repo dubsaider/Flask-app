@@ -97,15 +97,15 @@ const Cards = {
 
         DOM.clear(meta);
 
-        const assigneeName = card.assignee?.username || 'Не назначен';
-        meta.appendChild(this.makeMetaItem('Исполнитель', assigneeName));
+        const assigneeName = card.assignee?.username || Locale.get('common.unassigned');
+        meta.appendChild(this.makeMetaItem(Locale.get('card.meta_assignee'), assigneeName));
 
         const deadlineText = card.deadline
             ? new Date(card.deadline.replace(' ', 'T')).toLocaleString('ru-RU', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
             })
-            : 'Не задан';
-        meta.appendChild(this.makeMetaItem('Дедлайн', deadlineText));
+            : Locale.get('common.not_set');
+        meta.appendChild(this.makeMetaItem(Locale.get('card.meta_deadline'), deadlineText));
     },
 
     makeMetaItem(label, value) {
@@ -141,7 +141,7 @@ const Cards = {
 
         const empty = document.createElement('option');
         empty.value = '';
-        empty.textContent = 'Не назначен';
+        empty.textContent = Locale.get('common.unassigned');
         select.appendChild(empty);
 
         window.currentTeam.members.forEach(member => {
@@ -183,7 +183,7 @@ const Cards = {
                 await API.updateCard(parseInt(cardId), data);
             } else {
                 if (!Permissions.canCreateCard()) {
-                    alert('У вас нет прав на создание задач');
+                    alert(Locale.get('card.no_create_permission'));
                     return;
                 }
                 data.column_id = columnId;
@@ -194,13 +194,13 @@ const Cards = {
             Board.loadColumns();
             Notifications.refresh();
         } catch (error) {
-            alert('Ошибка сохранения: ' + error.message);
+            alert(`${Locale.get('card.save_error')}: ${error.message}`);
         }
     },
 
     async deleteCard() {
         const cardId = document.getElementById('card-id').value;
-        if (!cardId || !confirm('Удалить эту карточку?')) return;
+        if (!cardId || !confirm(Locale.get('card.delete_confirm'))) return;
 
         try {
             await API.deleteCard(parseInt(cardId), { user_id: Auth.getCurrentUser().id });
@@ -208,7 +208,7 @@ const Cards = {
             Board.loadColumns();
             Notifications.refresh();
         } catch (error) {
-            alert('Ошибка удаления: ' + error.message);
+            alert(`${Locale.get('card.delete_error')}: ${error.message}`);
         }
     }
 };

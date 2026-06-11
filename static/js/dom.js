@@ -5,7 +5,11 @@ const DOM = {
             console.error(`Template not found: ${templateId}`);
             return document.createDocumentFragment();
         }
-        return template.content.cloneNode(true);
+        const fragment = template.content.cloneNode(true);
+        if (typeof Locale !== 'undefined') {
+            Locale.apply(fragment);
+        }
+        return fragment;
     },
 
     clear(element) {
