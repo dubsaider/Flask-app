@@ -66,11 +66,18 @@ const Sidebar = {
 
     updateNav() {
         const showDashboard = this.workspace.some(group => group.permissions?.view_dashboard);
-        const showTeamSettings = this.workspace.some(group =>
+        const teamWithSettings = this.workspace.find(group =>
             group.permissions?.manage_roles || group.permissions?.manage_team_members
         );
+        const showTeamSettings = Boolean(teamWithSettings);
+
         document.getElementById('nav-dashboard')?.classList.toggle('hidden', !showDashboard);
-        document.getElementById('nav-team-settings')?.classList.toggle('hidden', !showTeamSettings);
+
+        const settingsLink = document.getElementById('nav-team-settings');
+        settingsLink?.classList.toggle('hidden', !showTeamSettings);
+        if (settingsLink && teamWithSettings) {
+            settingsLink.href = `/team/${teamWithSettings.team.id}/settings`;
+        }
 
         document.querySelectorAll('.sidebar-page-link').forEach(link => {
             const active = link.dataset.page === this.currentPage;
