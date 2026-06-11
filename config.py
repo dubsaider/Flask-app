@@ -61,6 +61,7 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     DEBUG = True
+    AUTO_MIGRATE = False
     DATABASE_PATH = os.environ.get(
         'DATABASE_PATH',
         str(BASE_DIR / 'kanban_test.db'),
